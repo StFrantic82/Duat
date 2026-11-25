@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Duat</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Marcellus+SC&family=Alegreya+Sans:wght@400;500;700;800&family=Noto+Sans+Egyptian+Hieroglyphs&display=swap">
+<link rel="stylesheet" href="style.css?v=11">
+</head>
+<body>
+<section id="home" class="home">
+  <div class="home-top">
+    <div class="lang" role="group" aria-label="Langue"></div>
+  </div>
+  <div class="frieze" id="frieze"></div>
+  <div class="home-title">
+    <h1 class="logo">Duat</h1>
+    <p class="tagline" data-t="tagline"></p>
+    <p class="meta" data-t="meta"></p>
+  </div>
+  <div class="setup">
+    <label class="row"><span data-t="yourName"></span><input id="pname" maxlength="16" autocomplete="off"></label>
+    <div class="row"><span data-t="players"></span><div class="seg" id="nseg"></div></div>
+    <p class="hint" id="nhint"></p>
+    <button class="big" id="startBtn" data-t="start"></button>
+    <div class="sec">
+      <button id="rulesBtn" data-t="rules"></button>
+      <button id="catBtn" data-t="cards"></button>
+      <button id="statsBtn" data-t="stats"></button>
+    </div>
+  </div>
+</section>
+
+<main id="game" class="game" hidden>
+  <header class="bar">
+    <button id="homeBtn" class="ghost" data-t="home"></button>
+    <div class="bar-mid">
+      <strong class="logo-s">Duat</strong>
+      <span id="roundTxt"></span>
+      <span id="sideTxt" class="pill"></span>
+    </div>
+    <div class="bar-r">
+      <button id="rulesBtn2" class="ghost" data-t="rules"></button>
+      <div class="lang small" role="group" aria-label="Langue"></div>
+    </div>
+  </header>
+
+  <div class="board-wrap"><div class="board" id="board"><img src="assets/board45.jpg" alt="Plateau du Duat"><div id="boardLayer"></div></div></div>
+
+  <div class="coach" id="coach" role="status"></div>
+
+  <section class="offer-sec">
+    <div class="sec-head"><h2 data-t="offer"></h2><div class="gods" id="gods"></div></div>
+    <div class="offer" id="offer"></div>
+    <div class="action" id="action"></div>
+  </section>
+
+  <section class="me" id="me"></section>
+  <section class="opps" id="opps"></section>
+  <details class="logbox"><summary data-t="journal"></summary><ol id="log"></ol></details>
+</main>
+
+<div class="modal" id="modal" hidden><div class="sheet" id="sheet"></div></div>
+
+<script src="engine.js?v=11"></script>
+<script src="ui.js?v=11"></script>
+<script src="stats.js?v=11"></script>
+</body>
+</html>
