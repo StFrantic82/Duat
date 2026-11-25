@@ -31,7 +31,7 @@ const IT = {
 "Toutes":"Tutte","Avec vous":"Con te","Simulations IA":"Simulazioni IA","Aucune partie enregistrée pour ces filtres. Jouez une partie ou lancez des simulations ci-dessus.":"Nessuna partita registrata per questi filtri. Gioca una partita o avvia delle simulazioni qui sopra.",
 "Copier les données (JSON)":"Copia i dati (JSON)","Confirmer l'effacement":"Conferma la cancellazione","Effacer":"Cancella",
 "Chaque partie terminée sur cet appareil est enregistrée dans ce navigateur (5 000 au maximum). Les simulations utilisent les IA du prototype : elles montrent des tendances, pas le jeu de vrais joueurs.":"Ogni partita terminata su questo dispositivo viene salvata in questo browser (5.000 al massimo). Le simulazioni usano le IA del prototipo: mostrano tendenze, non il gioco di giocatori reali.",
-"Démarrage…":"Avvio…","Scarabées restants en fin de partie : répartition":"Scarabei rimasti a fine partita: distribuzione","Maximum observé":"Massimo osservato","Chaque joueur commence avec 1 scarabée. Chaque scarabée restant rapporte 2 PV en fin de partie.":"Ogni giocatore inizia con 1 scarabeo. Ogni scarabeo rimasto vale 2 PV a fine partita.","Victoires partagées":"Vittorie condivise","Terminé":"Finito","Données copiées":"Dati copiati","Copie impossible ici":"Copia impossibile qui","Effacer les statistiques":"Cancella le statistiche","Statistiques effacées":"Statistiche cancellate","Statistiques":"Statistiche","Fermer":"Chiudi","er":"º","e":"º"
+"Démarrage…":"Avvio…","Génération":"Generazione","Arrêté":"Fermato","IA d'origine":"IA originale","générations":"generazioni","Entraîner":"Allena","Revenir à l'IA d'origine":"Torna all'IA originale","Copier les réglages":"Copia le impostazioni","Victoires du challenger":"Vittorie dello sfidante","Part attendue":"Quota attesa","adopté":"adottato","Réglages modifiés par l'entraînement":"Impostazioni modificate dall'allenamento","Origine":"Originale","Actuel":"Attuale","IA d'origine rétablie":"IA originale ripristinata","Réglages copiés":"Impostazioni copiate","Entraînement de l'IA":"Allenamento dell'IA","À chaque génération, une IA « challenger » aux réglages légèrement modifiés affronte l'IA actuelle (une place sur deux). Ses réglages sont adoptés s'ils gagnent nettement plus que leur part attendue (seuil statistique ~95 %). L'IA adoptée est utilisée dans vos parties et dans les simulations, dans ce navigateur.":"A ogni generazione, un'IA «sfidante» con impostazioni leggermente modificate affronta l'IA attuale (un posto su due). Le sue impostazioni vengono adottate se vince nettamente più della quota attesa (soglia statistica ~95%). L'IA adottata viene usata nelle tue partite e nelle simulazioni, in questo browser.","Valeur d'une ressource":"Valore di una risorsa","Bonus ressource du Gardien en cours":"Bonus risorsa del Guardiano in corso","Bonus Gardien presque atteint":"Bonus Guardiano quasi raggiunto","Valeur d'un symbole Scarabée":"Valore di un simbolo Scarabeo","Valeur d'Anubis":"Valore di Anubi","Valeur d'Horus":"Valore di Horus","Bonus paire d'Horus":"Bonus coppia di Horus","Valeur de Râ":"Valore di Ra","Bonus Gardien Dieux":"Bonus Guardiano Dei","Bonus pour rééquilibrer le cœur":"Bonus per riequilibrare il cuore","Malus pour déséquilibrer le cœur":"Malus per squilibrare il cuore","Poids des synergies de scoring":"Peso delle sinergie di punteggio","Valeur d'une Balance":"Valore di una Bilancia","Poids des PV fixes":"Peso dei PV fissi","Poids des scorings par icône":"Peso dei punteggi per icona","Anticipation des icônes futures":"Anticipazione delle icone future","Bonus Gardien « même côté »":"Bonus Guardiano «stesso lato»","Coût ressenti d'un scarabée dépensé":"Costo percepito di uno scarabeo speso","Valeur des scarabées de la rivière":"Valore degli scarabei del fiume","Préférence pour la pose en haut":"Preferenza per la posa sopra","Préférence pour la pose en bas":"Preferenza per la posa sotto","Scarabées max. pour un Gardien":"Scarabei max. per un Guardiano","Scarabées restants en fin de partie : répartition":"Scarabei rimasti a fine partita: distribuzione","Maximum observé":"Massimo osservato","Chaque joueur commence avec 1 scarabée. Chaque scarabée restant rapporte 2 PV en fin de partie.":"Ogni giocatore inizia con 1 scarabeo. Ogni scarabeo rimasto vale 2 PV a fine partita.","Victoires partagées":"Vittorie condivise","Terminé":"Finito","Données copiées":"Dati copiati","Copie impossible ici":"Copia impossibile qui","Effacer les statistiques":"Cancella le statistiche","Statistiques effacées":"Statistiche cancellate","Statistiques":"Statistiche","Fermer":"Chiudi","er":"º","e":"º"
 };
 const EN = () => U.lang() === "en", L = (fr, en) => EN() ? en : U.lang() === "it" ? (IT[fr] !== undefined ? IT[fr] : fr) : fr;
 const pct = (a, b) => b ? Math.round(100 * a / b) : 0;
@@ -59,6 +59,67 @@ async function simulate(n, np, onProgress) {
   }
   S.batch = false; save(); running = false; onProgress(n, n, true);
 }
+
+/* ---------- entraînement de l'IA ---------- */
+const WKEY = "duat_ai_w_v1";
+let tw = (() => { try { return JSON.parse(localStorage.getItem(WKEY) || "null"); } catch (e) { return null; } })();
+if (tw && tw.w) D.setWeights(tw.w);
+const saveW = () => { try { tw ? localStorage.setItem(WKEY, JSON.stringify(tw)) : localStorage.removeItem(WKEY); } catch (e) { } };
+let training = false, tStop = false, tLog = [], tGens = 10, tPer = 200, tP = "mix", tMsg = "";
+const ADD = { top: 1, bottom: 1 };
+function mutate(w, sigma) {
+  const o = {};
+  for (const k in w) {
+    if (k === "claimMax") { o[k] = Math.max(0, Math.min(6, w[k] + (Math.random() < 0.3 ? (Math.random() < 0.5 ? -1 : 1) : 0))); continue; }
+    if (ADD[k]) { o[k] = Math.round((w[k] + (Math.random() * 2 - 1) * 4 * sigma) * 100) / 100; continue; }
+    o[k] = Math.max(0, Math.round(w[k] * Math.exp((Math.random() * 2 - 1) * sigma) * 1000) / 1000);
+  }
+  return o;
+}
+async function train(onUpdate) {
+  training = true; tStop = false;
+  let best = D.getWeights();
+  for (let gen = 1; gen <= tGens && !tStop; gen++) {
+    const ch = mutate(best, 0.25); let chWins = 0, expSum = 0, games = 0;
+    for (let g = 0; g < tPer && !tStop; g++) {
+      const N = tP === "mix" ? 2 + (g % 4) : +tP;
+      const ws = Array.from({ length: N }, (_, k) => ((k + g) % 2 === 0) ? ch : best);
+      const G = await D.simGame(N, (Math.random() * 2 ** 32) >>> 0, ws);
+      const chSeats = ws.map((w, k) => w === ch ? k : -1).filter(k => k >= 0);
+      expSum += chSeats.length / N; games++;
+      const W = G.result.winners; if (W.length) chWins += W.filter(k => chSeats.includes(k)).length / W.length;
+      if (g % 10 === 9) { tMsg = `${L("Génération", "Generation")} ${gen}/${tGens} · ${g + 1}/${tPer}`; onUpdate(false); await new Promise(r => setTimeout(r, 0)); }
+    }
+    if (!games) break;
+    const exp = expSum / games, rate = chWins / games, margin = 1.65 * Math.sqrt(exp * (1 - exp) / games), ok = rate > exp + margin;
+    if (ok) { best = ch; D.setWeights(best); tw = { w: best, adopted: ((tw && tw.adopted) || 0) + 1, t: Date.now() }; saveW(); }
+    tLog.unshift({ gen, rate, exp, ok, games }); onUpdate(true);
+  }
+  training = false; tMsg = tStop ? L("Arrêté", "Stopped") : L("Terminé", "Done"); onUpdate(true);
+}
+function trainHTML() {
+  const cur = D.getWeights(), def = D.DEFAULT_W;
+  const changed = Object.keys(def).filter(k => Math.abs(cur[k] - def[k]) > 1e-9);
+  return `<details class="trainbox" ${training || tLog.length ? "open" : ""}><summary><b>🧠 ${L("Entraînement de l'IA", "AI training")}</b> · ${tw ? L(`IA entraînée (${tw.adopted} réglage(s) adopté(s))`, `trained AI (${tw.adopted} setting(s) adopted)`) : L("IA d'origine", "original AI")}</summary>
+   <p class="snote">${L("À chaque génération, une IA « challenger » aux réglages légèrement modifiés affronte l'IA actuelle (une place sur deux). Ses réglages sont adoptés s'ils gagnent nettement plus que leur part attendue (seuil statistique ~95 %). L'IA adoptée est utilisée dans vos parties et dans les simulations, dans ce navigateur.", "Each generation, a “challenger” AI with slightly modified settings plays against the current AI (every other seat). Its settings are adopted if they win clearly more than their expected share (~95% statistical threshold). The adopted AI is used in your games and in simulations, in this browser.")}</p>
+   <div class="simbox"><label><input type="number" id="tGens" min="1" max="200" value="${tGens}"> ${L("générations", "generations")}</label>
+    <label>× <input type="number" id="tPer" min="20" max="2000" value="${tPer}"> ${L("parties", "games")}</label>
+    <div class="sseg">${[["2", "2"], ["3", "3"], ["4", "4"], ["5", "5"], ["mix", L("2 à 5", "2 to 5")]].map(([v, l]) => `<button type="button" data-tp="${v}" aria-pressed="${tP === v}">${l}</button>`).join("")}</div> ${L("joueurs", "players")}
+    <button type="button" class="primary" id="tGo" ${training || running ? "disabled" : ""}>${L("Entraîner", "Train")}</button><button type="button" id="tStopB" ${training ? "" : "disabled"}>${L("Arrêter", "Stop")}</button>
+    <span class="simprog" id="tProg">${tMsg}</span>
+    <button type="button" id="tReset" ${training ? "disabled" : ""}>${L("Revenir à l'IA d'origine", "Back to original AI")}</button><button type="button" id="tCopy">${L("Copier les réglages", "Copy settings")}</button></div>
+   ${tLog.length ? `<table class="stab"><tr><th>${L("Génération", "Generation")}</th><th>${L("Victoires du challenger", "Challenger wins")}</th><th>${L("Part attendue", "Expected share")}</th><th>${L("Parties", "Games")}</th><th></th></tr>
+    ${tLog.slice(0, 30).map(x => `<tr><td>${x.gen}</td><td style="color:${x.ok ? "#2e8b3e" : ""}"><b>${Math.round(x.rate * 1000) / 10}%</b></td><td>${Math.round(x.exp * 1000) / 10}%</td><td>${x.games}</td><td>${x.ok ? "✓ " + L("adopté", "adopted") : ""}</td></tr>`).join("")}</table>` : ""}
+   ${changed.length ? `<h4>${L("Réglages modifiés par l'entraînement", "Settings changed by training")}</h4><table class="stab"><tr><th></th><th>${L("Origine", "Original")}</th><th>${L("Actuel", "Current")}</th></tr>${changed.map(k => `<tr><td>${esc(WN()[k] || k)}</td><td>${def[k]}</td><td><b style="color:${cur[k] > def[k] ? "#2e8b3e" : "#c0392b"}">${cur[k]}</b></td></tr>`).join("")}</table>` : ""}
+  </details>`;
+}
+const esc = x => String(x).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const WN = () => ({ res: L("Valeur d'une ressource", "Resource value"), gate: L("Bonus ressource du Gardien en cours", "Current Guardian resource bonus"), guardNear: L("Bonus Gardien presque atteint", "Guardian almost reached bonus"),
+  sc: L("Valeur d'un symbole Scarabée", "Scarab symbol value"), anubis: L("Valeur d'Anubis", "Anubis value"), horus: L("Valeur d'Horus", "Horus value"), horusPair: L("Bonus paire d'Horus", "Horus pair bonus"), ra: L("Valeur de Râ", "Ra value"),
+  godGuard: L("Bonus Gardien Dieux", "Gods Guardian bonus"), heartFix: L("Bonus pour rééquilibrer le cœur", "Heart rebalance bonus"), heartBad: L("Malus pour déséquilibrer le cœur", "Heart imbalance penalty"),
+  synergy: L("Poids des synergies de scoring", "Scoring synergy weight"), balIcon: L("Valeur d'une Balance", "Balance value"), flatPV: L("Poids des PV fixes", "Flat VP weight"), perPV: L("Poids des scorings par icône", "Per-icon scoring weight"),
+  future: L("Anticipation des icônes futures", "Future icon anticipation"), sideGuard: L("Bonus Gardien « même côté »", "“Same side” Guardian bonus"), cost: L("Coût ressenti d'un scarabée dépensé", "Felt cost of a spent scarab"),
+  river: L("Valeur des scarabées de la rivière", "River scarab value"), top: L("Préférence pour la pose en haut", "Preference for top"), bottom: L("Préférence pour la pose en bas", "Preference for bottom"), claimMax: L("Scarabées max. pour un Gardien", "Max scarabs for a Guardian") });
 
 /* ---------- calculs ---------- */
 function compute(f) {
@@ -220,9 +281,10 @@ function render() {
   const hdr = `<div class="simbox"><b>${L("Simuler des parties entre IA", "Simulate AI games")}</b>
      <label><input type="number" id="simN" min="1" max="5000" value="${simN}"> ${L("parties à", "games with")}</label>
      <div class="sseg">${[["2", "2"], ["3", "3"], ["4", "4"], ["5", "5"], ["mix", L("2 à 5", "2 to 5")]].map(([v, l]) => `<button type="button" data-sp="${v}" aria-pressed="${simP === v}">${l}</button>`).join("")}</div> ${L("joueurs", "players")}
-     <button type="button" class="primary" id="simGo" ${running ? "disabled" : ""}>${L("Lancer", "Run")}</button><button type="button" id="simStop" ${running ? "" : "disabled"}>${L("Arrêter", "Stop")}</button>
+     <button type="button" class="primary" id="simGo" ${running || training ? "disabled" : ""}>${L("Lancer", "Run")}</button><button type="button" id="simStop" ${running ? "" : "disabled"}>${L("Arrêter", "Stop")}</button>
      <span class="simprog" id="simProg">${msg}</span>
      <button type="button" data-act="clear" class="clearTop ${confirmClear ? "danger" : ""}">${confirmClear ? L("Confirmer l'effacement", "Confirm reset") : "🗑 " + L("Effacer les statistiques", "Reset statistics")}</button></div>
+   ${trainHTML()}
    ${me && me.n ? `<p class="snote">${L("Vos parties", "Your games")} : <b>${me.n}</b> · ${L("victoires", "wins")} <b>${me.w}</b> (${pct(me.w, me.n)}%) · ${L("meilleur score", "best score")} <b>${me.best}</b> · ${L("moyenne", "average")} <b>${f1(me.avg)}</b> · ${L("dévoré", "devoured")} ${me.dev}×</p>` : ""}
    <div class="sfilters"><span>${L("Parties", "Games")} :</span>${seg("src", [["all", L("Toutes", "All")], ["human", L("Avec vous", "With you")], ["sim", L("Simulations IA", "AI simulations")]])}
    <span>${L("Joueurs", "Players")} :</span>${seg("n", [["all", L("Tous", "All")], ["2", "2"], ["3", "3"], ["4", "4"], ["5", "5"]])}</div>`;
@@ -240,6 +302,14 @@ function onClick(e) {
     setTimeout(render, 30); return;
   }
   if (b.id === "simStop") { stopReq = true; return; }
+  if (b.dataset.tp) { tP = b.dataset.tp; render(); return; }
+  if (b.id === "tGo") {
+    tGens = Math.max(1, Math.min(200, +$("#tGens").value || 10)); tPer = Math.max(20, Math.min(2000, +$("#tPer").value || 200)); tMsg = L("Démarrage…", "Starting…"); render();
+    train(full => { if (full) render(); else { const el = $("#tProg"); if (el) el.textContent = tMsg; } }); setTimeout(render, 30); return;
+  }
+  if (b.id === "tStopB") { tStop = true; return; }
+  if (b.id === "tReset") { tw = null; saveW(); D.setWeights(null); tLog = []; tMsg = L("IA d'origine rétablie", "Original AI restored"); render(); return; }
+  if (b.id === "tCopy") { const txt = JSON.stringify(D.getWeights()); (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => { tMsg = L("Réglages copiés", "Settings copied"); render(); }, () => { tMsg = L("Copie impossible ici", "Copy not possible here"); render(); }); return; }
   if (b.id === "statsCopy") { const txt = JSON.stringify(load()); (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => { msg = L("Données copiées", "Data copied"); render(); }, () => { msg = L("Copie impossible ici", "Copy not possible here"); render(); }); return; }
   if (b.dataset.act === "clear") { if (confirmClear) { S.clear(); confirmClear = false; msg = L("Statistiques effacées", "Statistics reset"); } else confirmClear = true; render(); return; }
 }

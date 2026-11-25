@@ -247,3 +247,6 @@ button.danger{background:#c0392b;color:#fff;border-color:#8e2a1f}
 .action .choice.imposed{box-shadow:0 0 0 3px #ffcf4a,0 0 14px #ffb30088}
 .action .choice .imptag{position:absolute;top:-10px;right:8px;background:#ffcf4a;color:#2c1b10;font-style:normal;font-size:11px;font-weight:800;padding:1px 8px;border-radius:99px}
 .gslot.taken img.gown{filter:none}
+.trainbox{margin:10px 0;padding:10px 14px;border-radius:12px;border:1px solid var(--line);background:light-dark(#f6ecd5,#2a1f14)}
+.trainbox summary{cursor:pointer;min-height:36px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.trainbox input{width:80px}

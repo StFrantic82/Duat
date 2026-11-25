@@ -217,44 +217,50 @@
   }
 
   /* ---------- BOTS ---------- */
-  function evalPlace(G, p, id, side) {
+  // Réglages de l'IA (entraînables). Les valeurs par défaut sont les réglages d'origine.
+  const DEFAULT_W = { res: 0.9, gate: 0.4, guardNear: 0.9, sc: 2.1, anubis: 2.6, horus: 1.1, horusPair: 1.5, ra: 2.6, godGuard: 0.6,
+    heartFix: 2.2, heartBad: 1.4, synergy: 1, balIcon: 5, flatPV: 1, perPV: 0.9, future: 0.3, sideGuard: 0.8, cost: 2, river: 2, top: 0, bottom: 0, claimMax: 3 };
+  let W = Object.assign({}, DEFAULT_W);
+  const setWeights = w => { W = Object.assign({}, DEFAULT_W, w || {}); };
+  const getWeights = () => Object.assign({}, W);
+  function evalPlace(G, p, id, side, w = p.w || W) {
     const c = counts(p), cd = card(id), icons = visIcons(id, side), left = ROUNDS - G.round;
     const n = { ...c }; icons.forEach(k => n[k]++); n.R = n.R1 + n.R2 + n.R3; n.D = n.D1 + n.D2 + n.D3; n.diff = Math.abs(n.CN - n.CB);
-    let v = 0;
+    let v = side === "U" ? w.top : side === "D" ? w.bottom : 0;
     const gateKey = G.round <= 7 ? GUARDIANS[G.gates[G.round - 1] - 1].key : null;
     for (const k of icons) {
       if (/R[123]/.test(k)) {
-        v += 0.9;
-        if (gateKey === k) v += 0.4;
-        G.gates.forEach(gid => { const g = GUARDIANS[gid - 1]; if (g.key === k && G.claimed[gid] === undefined && g.need - c[k] <= 3 + left / 3) v += 0.9; });
+        v += w.res;
+        if (gateKey === k) v += w.gate;
+        G.gates.forEach(gid => { const g = GUARDIANS[gid - 1]; if (g.key === k && G.claimed[gid] === undefined && g.need - c[k] <= 3 + left / 3) v += w.guardNear; });
       }
-      if (k === "SC") v += 2.1; if (k === "D1") v += 2.6; if (k === "D2") v += 1.1 + (c.D2 % 2 ? 1.5 : 0); if (k === "D3") v += G.raPool.length ? 2.6 : 0.4;
-      if (/D/.test(k)) G.gates.forEach(gid => { if (gid === 6 && G.claimed[6] === undefined) v += 0.6; });
+      if (k === "SC") v += w.sc; if (k === "D1") v += w.anubis; if (k === "D2") v += w.horus + (c.D2 % 2 ? w.horusPair : 0); if (k === "D3") v += G.raPool.length ? w.ra : 0.4;
+      if (/D/.test(k)) G.gates.forEach(gid => { if (gid === 6 && G.claimed[6] === undefined) v += w.godGuard; });
     }
-    // Ammout : ne jamais finir avec un écart de 3+. On estime pouvoir corriger ~1,5 cœur par manche restante.
+    // Ammout : ne jamais finir avec un écart de 3+ (règle de sécurité, non entraînée)
     const danger = d => { const ex = d - (DEVOUR - 1); if (ex <= 0) return d === DEVOUR - 1 && left <= 1 ? 4 : 0; const cap = left * 1.1; return ex > cap ? 1000 : 14 + 22 * ex / Math.max(1, cap); };
     v += danger(c.diff) - danger(n.diff);
-    if (n.diff < c.diff) v += (c.diff >= DEVOUR - 1 ? 4 : 2.2) * (c.diff - n.diff);
-    if (n.diff > c.diff && n.diff < DEVOUR) v -= 1.4 * (n.diff - c.diff) * (left < 3 ? 2.5 : 1);
-    // synergies avec effets centraux déjà posés
+    if (n.diff < c.diff) v += (c.diff >= DEVOUR - 1 ? 4 : w.heartFix) * (c.diff - n.diff);
+    if (n.diff > c.diff && n.diff < DEVOUR) v -= w.heartBad * (n.diff - c.diff) * (left < 3 ? 2.5 : 1);
+    // synergies avec les scorings déjà posés
     const pot = () => ["L", "R", "D"].reduce((s, sd) => s + p.t[sd].reduce((a, cid) => { const K = card(cid).C; return a + (K && K.t === "per" ? perPV(K, p, sd) * (K.bal ? 0.5 : 1) : 0); }, 0), 0);
-    const before = pot(); p.t[side].push(id); v += pot() - before; p.t[side].pop();
+    const before = pot(); p.t[side].push(id); v += (pot() - before) * w.synergy; p.t[side].pop();
     const pb = n.diff === 0 ? 0.75 : n.diff === 1 ? 0.5 : 0.25;
     const C = cd.C;
     if (C && side !== "U") {
-      if (C.t === "bal") v += 5 * pb;
-      else if (C.t === "pv") v += C.v * (C.bal ? pb : 1);
+      if (C.t === "bal") v += w.balIcon * pb;
+      else if (C.t === "pv") v += C.v * (C.bal ? pb : 1) * w.flatPV;
       else { const now = side === "D" ? counts(p)[C.icon] : halfCounts(p, side)[C.icon] + icons.filter(k => k === C.icon || (C.icon === "R" && /R/.test(k)) || (C.icon === "D" && /D/.test(k))).length;
-        const exp = now + left * 0.3 * (C.icon === "R" ? 2 : 1); v += (Math.floor(exp / C.n) * C.v * 0.7 + Math.floor(now / C.n) * C.v * 0.3) * (C.bal ? pb : 1) * 0.9; }
+        const exp = now + left * w.future * (C.icon === "R" ? 2 : 1); v += (Math.floor(exp / C.n) * C.v * 0.7 + Math.floor(now / C.n) * C.v * 0.3) * (C.bal ? pb : 1) * w.perPV; }
     }
-    if (p.t[side].length >= 4) if (G.claimed[7] === undefined && G.gates.includes(7)) v += 0.8;
+    if (p.t[side].length >= 4) if (G.claimed[7] === undefined && G.gates.includes(7)) v += w.sideGuard;
     return v;
   }
   function botChoose(G, p) {
-    let best = null;
+    const w = p.w || W; let best = null;
     options(G, p).forEach(({ slot, side, cost }) => {
       const o = G.offer[slot];
-      const v = evalPlace(G, p, o.card, side) - cost * 2 + o.sc * 2 + G.r() * 0.3;
+      const v = evalPlace(G, p, o.card, side, w) - cost * w.cost + o.sc * w.river + G.r() * 0.3;
       if (!best || v > best.v) best = { slot, side, v };
     });
     return best;
@@ -270,7 +276,7 @@
     return pool.includes("SC2") ? "SC2" : pool.find(t => !/C[NB]/.test(t)) || pool[0];
   }
   function botClaim(G, p, list) {
-    const ok = list.filter(x => x.cost <= 3).sort((a, b) => a.cost - b.cost);
+    const mx = (p.w || W).claimMax, ok = list.filter(x => x.cost <= mx).sort((a, b) => a.cost - b.cost);
     return ok[0] || null;
   }
   // Le jeton Râ est posé du côté où il rapporte le plus aux scorings déjà en place
@@ -304,12 +310,13 @@
       })
     };
   }
-  async function simGame(n, seed) {
+  async function simGame(n, seed, ws) {
     const G = newGame({ seed, players: Array.from({ length: n }, (_, i) => ({ name: "IA " + (i + 1), bot: true })) });
+    if (ws) G.players.forEach((p, i) => { if (ws[i]) p.w = ws[i]; });
     let k = 0;
     while (!G.over && k++ < 200) await playTurn(G, botChoose(G, curPlayer(G)), botHooks);
     return G;
   }
-  const API = { summary, simGame, HALF_TOKENS, SIDES, OPP, halfCounts, cardsPV, cardPV, visIcons, scoringCards, CARDS, CHARS, GUARDIANS, RA_TOKENS, GPV, DEVOUR, ROUNDS, newGame, counts, metric, card, charOf, claimable, sideCost, options, curPlayer, playTurn, score, botChoose, botRa, botClaim, botHooks, evalPlace };
+  const API = { DEFAULT_W, setWeights, getWeights, summary, simGame, HALF_TOKENS, SIDES, OPP, halfCounts, cardsPV, cardPV, visIcons, scoringCards, CARDS, CHARS, GUARDIANS, RA_TOKENS, GPV, DEVOUR, ROUNDS, newGame, counts, metric, card, charOf, claimable, sideCost, options, curPlayer, playTurn, score, botChoose, botRa, botClaim, botHooks, evalPlace };
   if (typeof module !== "undefined") module.exports = API; else root.DUAT = API;
 })(this);
