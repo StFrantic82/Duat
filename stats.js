@@ -31,7 +31,7 @@ const IT = {
 "Toutes":"Tutte","Avec vous":"Con te","Simulations IA":"Simulazioni IA","Aucune partie enregistrée pour ces filtres. Jouez une partie ou lancez des simulations ci-dessus.":"Nessuna partita registrata per questi filtri. Gioca una partita o avvia delle simulazioni qui sopra.",
 "Copier les données (JSON)":"Copia i dati (JSON)","Confirmer l'effacement":"Conferma la cancellazione","Effacer":"Cancella",
 "Chaque partie terminée sur cet appareil est enregistrée dans ce navigateur (5 000 au maximum). Les simulations utilisent les IA du prototype : elles montrent des tendances, pas le jeu de vrais joueurs.":"Ogni partita terminata su questo dispositivo viene salvata in questo browser (5.000 al massimo). Le simulazioni usano le IA del prototipo: mostrano tendenze, non il gioco di giocatori reali.",
-"Démarrage…":"Avvio…","Terminé":"Finito","Données copiées":"Dati copiati","Copie impossible ici":"Copia impossibile qui","Effacer les statistiques":"Cancella le statistiche","Statistiques effacées":"Statistiche cancellate","Statistiques":"Statistiche","Fermer":"Chiudi","er":"º","e":"º"
+"Démarrage…":"Avvio…","Chaque joueur commence avec 1 scarabée. Chaque scarabée restant rapporte 2 PV en fin de partie.":"Ogni giocatore inizia con 1 scarabeo. Ogni scarabeo rimasto vale 2 PV a fine partita.","Victoires partagées":"Vittorie condivise","Terminé":"Finito","Données copiées":"Dati copiati","Copie impossible ici":"Copia impossibile qui","Effacer les statistiques":"Cancella le statistiche","Statistiques effacées":"Statistiche cancellate","Statistiques":"Statistiche","Fermer":"Chiudi","er":"º","e":"º"
 };
 const EN = () => U.lang() === "en", L = (fr, en) => EN() ? en : U.lang() === "it" ? (IT[fr] !== undefined ? IT[fr] : fr) : fr;
 const pct = (a, b) => b ? Math.round(100 * a / b) : 0;
@@ -70,6 +70,7 @@ function compute(f) {
   const PS = P.filter(p => !p.dev), LoS = Lo.filter(p => !p.dev);
   r.players = P.length; r.baseWin = W.length / P.length;
   r.noWinner = pct(G.filter(g => !g.players.some(p => p.win)).length, G.length);
+  r.shared = pct(G.filter(g => g.players.filter(p => p.win).length > 1).length, G.length);
   // vue d'ensemble
   const margins = G.map(g => { const s = g.players.filter(p => !p.dev).map(p => p.total).sort((a, b) => b - a); return s.length > 1 ? s[0] - s[1] : null; }).filter(x => x !== null);
   r.over = { avg: avg(PS, p => p.total), win: avg(W, p => p.total), margin: avg(margins, x => x), dev: pct(P.filter(p => p.dev).length, P.length), bal: pct(P.filter(p => p.diff === 0).length, P.length),
@@ -93,7 +94,6 @@ function compute(f) {
   r.eco = [["gRiver", L("Ramassés sur la rivière", "Collected from the river"), 1], ["gCard", L("Symboles Scarabée des cartes", "Scarab symbols on cards"), 1], ["gAnubis", L("Anubis", "Anubis"), 1], ["gSc2", L("Jeton Râ « 1 Scarabée »", "Ra token “1 scarab”"), 1],
     ["cardCost", L("Dépensés : cartes", "Spent: cards"), 0], ["dirCost", L("Dépensés : changement de direction", "Spent: direction change"), 0], ["guardCost", L("Dépensés : Gardiens", "Spent: Guardians"), 0]].map(([k, l, g]) => Object.assign({ k, l, g }, E(k)));
   r.eco.push({ k: "left", l: L("Restants en fin de partie", "Left at game end"), all: avg(P, p => p.scLeft), win: avg(W, p => p.scLeft), lose: avg(Lo, p => p.scLeft) });
-  r.eco.push({ k: "free", l: L("Prises gratuites forcées (rien de payable)", "Forced free takes (nothing affordable)"), all: avg(P, p => p.free), win: avg(W, p => p.free), lose: avg(Lo, p => p.free) });
   // dieux
   const tokN = p => p.tokens.length;
   r.gods = [[L("Scarabées gagnés grâce à Anubis", "Scarabs gained from Anubis"), p => p.eco.gAnubis], [L("Cartes piochées grâce à Horus", "Cards drawn from Horus"), p => p.horus], [L("Jetons Râ obtenus", "Ra tokens obtained"), tokN], [L("Manches jouées en premier", "Rounds played first"), p => p.first]]
@@ -142,10 +142,9 @@ function body(r) {
     <div class="scard"><b>${f1(r.over.margin)}</b><span>${L("PV d'écart entre le 1er et le 2e", "VP gap between 1st and 2nd")}</span></div>
     <div class="scard ${r.over.dev > 15 ? "hot" : ""}"><b>${r.over.dev}%</b><span>${L("des joueurs dévorés par Ammout", "of players devoured by Ammit")}</span></div>
     <div class="scard"><b>${r.over.bal}%</b><span>${L("des joueurs parfaitement équilibrés", "of players perfectly balanced")}</span></div>
-    <div class="scard"><b>${f1(r.over.free)}</b><span>${L("prises gratuites forcées par joueur", "forced free takes per player")}</span></div>
     <div class="scard"><b>${f1(r.over.deck)}</b><span>${L("cartes restant dans la pioche", "cards left in the deck")}</span></div>
   </div>
-  <p class="snote">${L("Référence : taux de victoire attendu si tout est équilibré", "Reference: expected win rate if everything is balanced")} = <b>${Math.round(base * 100)}%</b>. ${L("En vert au-dessus, en rouge en dessous.", "Green above, red below.")} ${L("Les joueurs dévorés sont éliminés : ils comptent dans « dévorés » mais sont exclus de toutes les moyennes de PV.", "Devoured players are eliminated: they count as “devoured” but are excluded from all VP averages.")}${r.noWinner ? ` ${L("Parties où tout le monde a été dévoré", "Games where everyone was devoured")} : ${r.noWinner}%.` : ""}</p>
+  <p class="snote">${L("Référence : taux de victoire attendu si tout est équilibré", "Reference: expected win rate if everything is balanced")} = <b>${Math.round(base * 100)}%</b>. ${L("En vert au-dessus, en rouge en dessous.", "Green above, red below.")} ${L("Les joueurs dévorés sont éliminés : ils comptent dans « dévorés » mais sont exclus de toutes les moyennes de PV.", "Devoured players are eliminated: they count as “devoured” but are excluded from all VP averages.")}${r.noWinner ? ` ${L("Parties où tout le monde a été dévoré", "Games where everyone was devoured")} : ${r.noWinner}%.` : ""}${r.shared ? ` ${L("Victoires partagées", "Shared victories")} : ${r.shared}%.` : ""}</p>
 
   <h3>${L("Par nombre de joueurs", "By player count")}</h3>
   <table class="stab"><tr><th>${L("Joueurs", "Players")}</th><th>${L("Parties", "Games")}</th><th>${L("PV moyens", "Average VP")}</th><th>${L("PV du gagnant", "Winner VP")}</th></tr>
@@ -174,7 +173,7 @@ function body(r) {
 
   <h3>${L("Économie des scarabées (par joueur et par partie)", "Scarab economy (per player per game)")}</h3>
   <table class="stab"><tr><th></th>${th3()}</tr>${r.eco.map(e => row3(`${ic("SC")} ${e.g ? "+ " : e.k === "left" || e.k === "free" ? "" : "− "}${e.l}`, e)).join("")}</table>
-  <p class="snote">${L("Chaque joueur commence avec 1 scarabée. Une « prise gratuite forcée » arrive quand aucune carte n'est payable : à surveiller, c'est une règle provisoire du prototype.", "Each player starts with 1 scarab. A “forced free take” happens when no card is affordable: worth watching, it is a provisional prototype rule.")}</p>
+  <p class="snote">${L("Chaque joueur commence avec 1 scarabée. Chaque scarabée restant rapporte 2 PV en fin de partie.", "Each player starts with 1 scarab. Each remaining scarab is worth 2 VP at game end.")}</p>
 
   <h3>${L("Dieux et ordre du tour", "Gods and turn order")}</h3>
   <table class="stab"><tr><th></th>${th3()}</tr>${r.gods.map(g => row3(g.l, g)).join("")}</table>

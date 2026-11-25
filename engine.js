@@ -167,7 +167,8 @@
     p.st.takes.push({ id: o.card, side: choice.side, round: G.round, slot: choice.slot, cost, dir: sc, river: o.sc });
     if (p.sc < 0) throw new Error("scarabées insuffisants");
     G.log.push({ k: "take", p: p.i, id: o.card, cost, gain: o.sc, sideCost: sc });
-    G.offer[choice.slot] = null;
+    // les cartes à droite glissent aussitôt vers la gauche (leur coût baisse) ; on recomplète en fin de manche
+    G.offer.splice(choice.slot, 1); G.offer.push(null);
     await placeCard(G, p, o.card, choice.side, hooks);
     const cl = claimable(G, p);
     if (cl.length) {
@@ -207,10 +208,12 @@
       const cards = cardsPV(p, balanced);
       const bal = balanced ? c.BAL * 5 : 0, guard = p.guardians.length * GPV, scar = p.sc * 2;
       const ra = p.tokens.filter(t => t.k === "SC2").length * 2;
-      return { p: p.i, cards, bal, guard, scar, ra, total: cards + bal + guard + scar + ra, devoured, diff: c.diff };
+      return { p: p.i, cards, bal, guard, scar, ra, total: cards + bal + guard + scar + ra, devoured, diff: c.diff, hearts: c.CN + c.CB };
     });
-    const ranked = rows.slice().sort((a, b) => (a.devoured - b.devoured) || (b.total - a.total) || (G.players[b.p].sc - G.players[a.p].sc));
-    return { rows, ranked, winner: ranked[0].devoured ? null : ranked[0].p };
+    // départage : le plus de cœurs (noirs + blancs) ; sinon victoire partagée
+    const ranked = rows.slice().sort((a, b) => (a.devoured - b.devoured) || (b.total - a.total) || (b.hearts - a.hearts));
+    const top = ranked[0], winners = top.devoured ? [] : ranked.filter(r => !r.devoured && r.total === top.total && r.hearts === top.hearts).map(r => r.p);
+    return { rows, ranked, winners, winner: winners.length ? winners[0] : null };
   }
 
   /* ---------- BOTS ---------- */
@@ -290,7 +293,7 @@
       players: G.players.map(p => {
         const r = R.rows[p.i], c = counts(p), balanced = c.diff === 0;
         return {
-          i: p.i, human: !p.bot, seat: seat0[p.i], char: p.char, win: R.winner === p.i, rank: rankOf[p.i],
+          i: p.i, human: !p.bot, seat: seat0[p.i], char: p.char, win: R.winners.includes(p.i), shared: R.winners.length > 1, rank: rankOf[p.i],
           total: r.total, cards: r.cards, bal: r.bal, guard: r.guard, scar: r.scar, ra: r.ra, dev: r.devoured, diff: r.diff, CN: c.CN, CB: c.CB, BAL: c.BAL,
           scLeft: p.sc, dirs: { L: p.t.L.length, R: p.t.R.length, U: p.t.U.length, D: p.t.D.length },
           takes: p.st.takes.map(x => Object.assign({}, x, { pv: cardPV(x.id, x.side, p, balanced) })),
