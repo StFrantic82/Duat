@@ -19,7 +19,7 @@ const T = {
     meta: "2 à 5 joueurs · 30 minutes · 8 manches", yourName: "Votre nom", players: "Joueurs", start: "Entrer dans le Duat",
     rules: "Règles", cards: "Le matériel", stats: "Statistiques", home: "Accueil", offer: "Cartes Vie disponibles", journal: "Journal de la partie",
     nhint: n => `Vous contre ${n - 1} adversaire${n > 2 ? "s" : ""} · plateau face ${n <= 3 ? "B" : "A"} · ${n <= 3 ? 4 : n === 4 ? 5 : 6} cartes Vie visibles`,
-    round: (r) => r <= 7 ? `Manche ${r}/8` : "Manche 8/8 · Jugement", sideFree: "Direction libre", sideImp: s => `Direction imposée : ${T.fr[s]}`,
+    round: (r) => r <= 7 ? `Manche ${r}/8` : "Manche 8/8 · Jugement", sideFree: "Direction libre", orient: { L: "Les Fautes", R: "Les Vertus", U: "Les Accomplissements", D: "La Spiritualité" }, impBy: n => `Direction imposée par ${n}`, youChoose: "Vous êtes le 1er joueur : choisissez la direction, elle sera imposée aux autres.", waitFirst: n => `${n} va choisir la direction de la manche…`, imposedTag: "imposée", sideImp: s => `Direction imposée : ${T.fr[s]}`,
     L: "◀ Gauche", R: "Droite ▶", U: "▲ Haut", D: "▼ Bas", subU: "sans scoring", subD: "scoring seul", halfL: "Moitié gauche", halfR: "Moitié droite", adj: "direction adjacente", opp: "direction opposée", free: "gratuit", impose: "vous imposez ce côté", change: "changer de côté",
     yourTurn: "<b>À vous !</b> Choisissez une carte Vie, puis le côté où la poser.", pickSide: "<b>Où la poser ?</b> Les icônes du côté choisi rejoignent votre tableau.",
     thinking: n => `${esc(n)} réfléchit…`, gate: k => `Porte en cours : on compte vos`, cost: "Coût", order: "Ordre du tour",
@@ -48,7 +48,7 @@ const T = {
     meta: "2–5 players · 30 minutes · 8 rounds", yourName: "Your name", players: "Players", start: "Enter the Duat",
     rules: "Rules", cards: "Components", stats: "Statistics", home: "Home", offer: "Available Life cards", journal: "Game log",
     nhint: n => `You vs ${n - 1} opponent${n > 2 ? "s" : ""} · board side ${n <= 3 ? "B" : "A"} (${n <= 3 ? 4 : n === 4 ? 5 : 6} cards on display)`,
-    round: r => r <= 7 ? `Round ${r}/8` : "Round 8/8 · Judgment", sideFree: "Free direction", sideImp: s => `Imposed direction: ${T.en[s]}`,
+    round: r => r <= 7 ? `Round ${r}/8` : "Round 8/8 · Judgment", sideFree: "Free direction", orient: { L: "Faults", R: "Virtues", U: "Achievements", D: "Spirituality" }, impBy: n => `Direction imposed by ${n}`, youChoose: "You are the first player: choose the direction, it will be imposed on the others.", waitFirst: n => `${n} will choose this round's direction…`, imposedTag: "imposed", sideImp: s => `Imposed direction: ${T.en[s]}`,
     L: "◀ Left", R: "Right ▶", U: "▲ Top", D: "▼ Bottom", subU: "no scoring", subD: "scoring only", halfL: "Left half", halfR: "Right half", adj: "adjacent direction", opp: "opposite direction", free: "free", impose: "you impose this side", change: "change side",
     yourTurn: "<b>Your turn!</b> Pick a Life card, then the side to place it on.", pickSide: "<b>Where to place it?</b> The icons on that side join your tableau.",
     thinking: n => `${esc(n)} is thinking…`, cost: "Cost", order: "Turn order",
@@ -77,7 +77,7 @@ const T = {
     meta: "Da 2 a 5 giocatori · 30 minuti · 8 round", yourName: "Il tuo nome", players: "Giocatori", start: "Entra nel Duat",
     rules: "Regole", cards: "I materiali", stats: "Statistiche", home: "Home", offer: "Carte Vita disponibili", journal: "Diario della partita",
     nhint: n => `Tu contro ${n - 1} avversari${n > 2 ? "" : "o"} · plancia lato ${n <= 3 ? "B" : "A"} · ${n <= 3 ? 4 : n === 4 ? 5 : 6} carte Vita visibili`,
-    round: r => r <= 7 ? `Round ${r}/8` : "Round 8/8 · Giudizio", sideFree: "Direzione libera", sideImp: s => `Direzione imposta: ${T.it[s]}`,
+    round: r => r <= 7 ? `Round ${r}/8` : "Round 8/8 · Giudizio", sideFree: "Direzione libera", orient: { L: "Le Colpe", R: "Le Virtù", U: "Le Realizzazioni", D: "La Spiritualità" }, impBy: n => `Direzione imposta da ${n}`, youChoose: "Sei il primo giocatore: scegli la direzione, sarà imposta agli altri.", waitFirst: n => `${n} sceglierà la direzione del round…`, imposedTag: "imposta", sideImp: s => `Direzione imposta: ${T.it[s]}`,
     L: "◀ Sinistra", R: "Destra ▶", U: "▲ Sopra", D: "▼ Sotto", subU: "senza punteggio", subD: "solo punteggio", halfL: "Metà sinistra", halfR: "Metà destra", adj: "direzione adiacente", opp: "direzione opposta", free: "gratis", impose: "imponi questa direzione", change: "cambiare lato",
     yourTurn: "<b>Tocca a te!</b> Scegli una carta Vita, poi dove posarla.", pickSide: "<b>Dove posarla?</b> Le icone del lato scelto entrano nel tuo tableau.",
     thinking: n => `${esc(n)} sta riflettendo…`, cost: "Costo", order: "Ordine di turno",
@@ -145,6 +145,16 @@ function tableauHTML(p) {
 function halvesHTML(p) {
   const row = h => { const c = D.halfCounts(p, h); return `<div class="half"><b>${t(h === "L" ? "halfL" : "halfR")}</b>${["R1", "R2", "R3", "CN", "CB", "D1", "D2", "D3"].filter(k => c[k]).map(k => `${ic(k)}${c[k]}`).join(" ") || "—"}</div>`; };
   return `<div class="halves">${row("L")}${row("R")}</div>`;
+}
+function compassHTML() {
+  const first = G.players[G.order[0]], s = G.side;
+  const arrow = d => `<span class="ca c${d} ${s === d ? "on" : s ? "off" : ""}">${({ L: "◀", R: "▶", U: "▲", D: "▼" })[d]}</span>`;
+  const rose = `<div class="rose">${arrow("U")}${arrow("L")}<span class="cc">${ba(first, "cba")}</span>${arrow("R")}${arrow("D")}</div>`;
+  let txt;
+  if (s) txt = `<small>${t("impBy", esc(first.name))}</small><b>${t(s)}</b><i>${T[lang].orient[s]}</i>`;
+  else if (!first.bot) txt = `<b class="choose">${t("youChoose")}</b>`;
+  else txt = `<small>${t("waitFirst", esc(first.name))}</small>`;
+  return `${rose}<div class="ctxt">${txt}</div>`;
 }
 /* ---------- état ---------- */
 let G = null, gameId = 0, ui = { sel: null, resolve: null, modalResolve: null };
@@ -294,11 +304,12 @@ function render() {
       const o = opts.find(x => x.slot === ui.sel && x.side === side);
       const sc = D.sideCost(G, side), first = G.turn === 0 && G.side === null;
       const note = o && o.free ? t("free") : first ? t("impose") : sc ? `+${sc} ${ic("SC")} ${t(sc === 2 ? "opp" : "adj")}` : t("free");
-      act += `<button type="button" class="choice ${o ? "primary" : ""}" data-side="${side}" ${o ? "" : "disabled"}><span>${t(side)} ${D.visIcons(id, side).map(k => ic(k)).join("")}${side !== "U" && c.C ? ` · ${effHTML(c.C)}` : ""}</span><small>${side === "U" ? t("subU") + " · " : side === "D" ? t("subD") + " · " : ""}${note}</small></button>`;
+      act += `<button type="button" class="choice ${o ? "primary" : ""} ${G.side === side ? "imposed" : ""}" data-side="${side}" ${o ? "" : "disabled"}>${G.side === side ? `<em class="imptag">★ ${t("imposedTag")}</em>` : ""}<span>${t(side)} ${D.visIcons(id, side).map(k => ic(k)).join("")}${side !== "U" && c.C ? ` · ${effHTML(c.C)}` : ""}</span><small>${side === "U" ? t("subU") + " · " : side === "D" ? t("subD") + " · " : ""}${note}</small></button>`;
     });
     act += `<button type="button" class="ghost" data-cancel>✕</button>`;
   }
   $("#action").innerHTML = act;
+  $("#compass").innerHTML = G.over ? "" : compassHTML();
   // moi
   $("#me").innerHTML = `<div class="me-head"><h2>${ba(me)} ${esc(me.name)}</h2>${chipsHTML(me, true)}</div>
     ${halvesHTML(me)}<div class="tableau">${tableauHTML(me)}</div>

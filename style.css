@@ -228,3 +228,21 @@ button.danger{background:#c0392b;color:#fff;border-color:#8e2a1f}
 .bar .lang button{background:transparent;color:#f2e5c9}.bar .lang button[aria-pressed=true]{background:#f2e5c9;color:#2c1b10}
 .simbox .clearTop{margin-left:auto}
 .sheet h4{font-size:17px;margin:16px 0 6px}
+
+/* rose des directions */
+.compass{display:flex;align-items:center;gap:16px;padding:10px 14px;margin:-4px 0 12px;border-radius:14px;background:light-dark(#2c1b10,#0e0a06);color:#f2e5c9;min-height:96px}
+.compass:empty{display:none}
+.rose{display:grid;grid-template:repeat(3,28px)/repeat(3,28px);place-items:center;flex:none}
+.rose .cU{grid-area:1/2}.rose .cL{grid-area:2/1}.rose .cc{grid-area:2/2}.rose .cR{grid-area:2/3}.rose .cD{grid-area:3/2}
+.ca{font-size:20px;line-height:1;color:#8c7a5e;transition:transform .3s,color .3s}
+.ca.off{opacity:.3}
+.ca.on{color:#ffcf4a;font-size:32px;text-shadow:0 0 12px #ffb300,0 0 2px #fff;transform:scale(1.15)}
+.cba{width:26px;height:26px;border-radius:50%}
+.ctxt{display:flex;flex-direction:column;gap:2px;min-width:0}
+.ctxt small{font-size:13px;opacity:.85}
+.ctxt b{font-family:"Marcellus SC",serif;font-size:28px;line-height:1.05;color:#ffcf4a}
+.ctxt b.choose{font-family:inherit;font-size:16px;color:#ffcf4a}
+.ctxt i{font-size:14px;opacity:.85}
+.action .choice{position:relative}
+.action .choice.imposed{box-shadow:0 0 0 3px #ffcf4a,0 0 14px #ffb30088}
+.action .choice .imptag{position:absolute;top:-10px;right:8px;background:#ffcf4a;color:#2c1b10;font-style:normal;font-size:11px;font-weight:800;padding:1px 8px;border-radius:99px}
