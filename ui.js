@@ -249,7 +249,7 @@ function renderBoard() {
     if (!rev) return;
     const taken = own !== undefined;
     h += `<div class="gslot ${cur ? "cur" : ""} ${taken ? "taken" : ""}" style="left:${PX(85 + 320 * i)};top:${PY(45)};width:${PX(165)};height:${PY(415)}">
-      <img src="assets/g${gid}a.jpg" alt=""><button type="button" data-g="${gid}" aria-label="Gardien"></button>${taken ? `<div class="tag">→ ${esc(G.players[own].name)}</div>` : ""}</div>`;
+      <img src="assets/g${gid}a.jpg" alt=""><button type="button" data-g="${gid}" aria-label="Gardien"></button>${taken ? ba(G.players[own], "gown") : ""}</div>`;
   });
   // âmes : dernière position de chaque joueur
   const pos = {};
