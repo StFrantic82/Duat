@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Marcellus+SC&family=Alegreya+Sans:wght@400;500;700;800&family=Noto+Sans+Egyptian+Hieroglyphs&display=swap">
-<link rel="stylesheet" href="style.css?v=30">
+<link rel="stylesheet" href="style.css?v=33">
 </head>
 <body>
 <section id="home" class="home">
@@ -15,7 +15,9 @@
     <div class="lang" role="group" aria-label="Langue"></div>
   </div>
   <div class="eg-band" aria-hidden="true"></div>
-  <div class="frieze" id="frieze"></div>
+  <div class="home-main">
+  <div class="frieze side l" id="friezeL"></div>
+  <div class="home-center">
   <div class="home-title">
     <div class="eg-orn hg" aria-hidden="true">𓋹 𓂀 𓋹</div>
     <h1 class="logo">Duat</h1>
@@ -35,6 +37,9 @@
       <button id="statsBtn" data-t="stats"></button>
       <button id="trainBtn" data-t="train"></button>
     </div>
+  </div>
+  </div>
+  <div class="frieze side r" id="friezeR"></div>
   </div>
   <div class="eg-band bottom" aria-hidden="true"></div>
 </section>
@@ -71,9 +76,9 @@
 
 <div class="modal" id="modal" hidden><div class="sheet" id="sheet"></div></div>
 
-<script src="engine.js?v=30"></script>
-<script src="ui.js?v=30"></script>
-<script src="stats.js?v=30"></script>
-<script src="tuto.js?v=30"></script>
+<script src="engine.js?v=33"></script>
+<script src="ui.js?v=33"></script>
+<script src="stats.js?v=33"></script>
+<script src="tuto.js?v=33"></script>
 </body>
 </html>

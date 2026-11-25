@@ -169,7 +169,8 @@ function applyLang() {
   if (G && !$("#game").hidden) render();
 }
 document.addEventListener("click", e => { const b = e.target.closest(".lang button"); if (b) { lang = b.dataset.l; store.set("lang", lang); applyLang(); } });
-$("#frieze").innerHTML = [1, 2, 3, 4, 5, 6, 7, 8].map(i => `<img src="assets/g${i}a.jpg" alt="">`).join("");
+$("#friezeL").innerHTML = [1, 2, 3, 4].map(i => `<img src="assets/g${i}a.jpg" alt="">`).join("");
+$("#friezeR").innerHTML = [5, 6, 7, 8].map(i => `<img src="assets/g${i}a.jpg" alt="">`).join("");
 $("#nseg").innerHTML = [2, 3, 4, 5].map(n => `<button type="button" data-n="${n}" aria-pressed="${n === nPlayers}">${n}</button>`).join("");
 $("#nseg").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; nPlayers = +b.dataset.n; window.__nPlayers = nPlayers; store.set("n", nPlayers); $("#nseg").querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", x === b)); $("#nhint").textContent = t("nhint", nPlayers); });
 $("#pname").value = store.get("name", "");
