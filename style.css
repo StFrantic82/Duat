@@ -251,3 +251,4 @@ button.danger{background:#c0392b;color:#fff;border-color:#8e2a1f}
 .trainbox summary{cursor:pointer;min-height:36px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .trainbox input{width:80px}
 .trainbox{border:2px solid var(--gold)}.trainbox summary b{font-family:"Marcellus SC",serif;font-size:21px;color:var(--lapis)}
+.sec{display:grid;grid-template-columns:1fr 1fr;gap:8px}

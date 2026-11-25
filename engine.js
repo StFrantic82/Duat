@@ -217,8 +217,8 @@
 
   /* ---------- BOTS ---------- */
   // Réglages de l'IA (entraînables). Les valeurs par défaut sont les réglages d'origine.
-  const DEFAULT_W = { res: 0.9, gate: 0.4, guardNear: 0.9, sc: 2.1, anubis: 2.6, horus: 1.1, horusPair: 1.5, ra: 2.6, godGuard: 0.6,
-    heartFix: 2.2, heartBad: 1.4, synergy: 1, balIcon: 5, flatPV: 1, perPV: 0.9, future: 0.3, sideGuard: 0.8, cost: 2, river: 2, top: 0, bottom: 0, claimMax: 3 };
+  // Réglages entraînés (280 générations, ~240 000 parties simulées, 25/11/2026)
+  const DEFAULT_W = {res:  1.064,  gate:  0.152,  guardNear:  0.303,  sc:  3.122,  anubis:  3.393,  horus:  3.833,  horusPair:  1.284,  ra:  7.907,  godGuard:  0.682,  heartFix:  1.715,  heartBad:  0.675,  synergy:  0.637,  balIcon:  4.494,  flatPV:  0.551,  perPV:  0.397,  future:  0.481,  sideGuard:  0.794,  cost:  2.339,  river:  1.365,  top:  1.17,  bottom:  0.11,  claimMax:  2};
   let W = Object.assign({}, DEFAULT_W);
   const setWeights = w => { W = Object.assign({}, DEFAULT_W, w || {}); };
   const getWeights = () => Object.assign({}, W);

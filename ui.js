@@ -17,7 +17,7 @@ const T = {
   fr: {
     tagline: "Guidez votre âme à travers les portes du Duat, gagnez la faveur des Gardiens… et présentez à Osiris un cœur en équilibre.",
     meta: "2 à 5 joueurs · 30 minutes · 8 manches", yourName: "Votre nom", players: "Joueurs", start: "Entrer dans le Duat",
-    rules: "Règles", cards: "Le matériel", stats: "Statistiques", home: "Accueil", offer: "Cartes Vie disponibles", journal: "Journal de la partie",
+    rules: "Règles", cards: "Le matériel", stats: "Statistiques", train: "🧠 Entraîner l'IA", home: "Accueil", offer: "Cartes Vie disponibles", journal: "Journal de la partie",
     nhint: n => `Vous contre ${n - 1} adversaire${n > 2 ? "s" : ""} · plateau face ${n <= 3 ? "B" : "A"} · ${n <= 3 ? 4 : n === 4 ? 5 : 6} cartes Vie visibles`,
     round: (r) => r <= 7 ? `Manche ${r}/8` : "Manche 8/8 · Jugement", sideFree: "Direction libre", orient: { L: "Les Fautes", R: "Les Vertus", U: "Les Accomplissements", D: "La Spiritualité" }, impBy: n => `Direction imposée par ${n}`, youChoose: "Vous êtes le 1er joueur : choisissez la direction, elle sera imposée aux autres.", waitFirst: n => `${n} va choisir la direction de la manche…`, imposedTag: "imposée", sideImp: s => `Direction imposée : ${T.fr[s]}`,
     L: "◀ Gauche", R: "Droite ▶", U: "▲ Haut", D: "▼ Bas", subU: "sans scoring", subD: "scoring seul, sur tout le jeu", halfL: "Moitié gauche", halfR: "Moitié droite", adj: "direction adjacente", opp: "direction opposée", free: "gratuit", impose: "vous imposez ce côté", change: "changer de côté",
@@ -46,7 +46,7 @@ const T = {
   en: {
     tagline: "Guide your soul through the gates of the Duat, win the Guardians' favour… and bring Osiris a heart in perfect balance.",
     meta: "2–5 players · 30 minutes · 8 rounds", yourName: "Your name", players: "Players", start: "Enter the Duat",
-    rules: "Rules", cards: "Components", stats: "Statistics", home: "Home", offer: "Available Life cards", journal: "Game log",
+    rules: "Rules", cards: "Components", stats: "Statistics", train: "🧠 Train the AI", home: "Home", offer: "Available Life cards", journal: "Game log",
     nhint: n => `You vs ${n - 1} opponent${n > 2 ? "s" : ""} · board side ${n <= 3 ? "B" : "A"} (${n <= 3 ? 4 : n === 4 ? 5 : 6} cards on display)`,
     round: r => r <= 7 ? `Round ${r}/8` : "Round 8/8 · Judgment", sideFree: "Free direction", orient: { L: "Faults", R: "Virtues", U: "Achievements", D: "Spirituality" }, impBy: n => `Direction imposed by ${n}`, youChoose: "You are the first player: choose the direction, it will be imposed on the others.", waitFirst: n => `${n} will choose this round's direction…`, imposedTag: "imposed", sideImp: s => `Imposed direction: ${T.en[s]}`,
     L: "◀ Left", R: "Right ▶", U: "▲ Top", D: "▼ Bottom", subU: "no scoring", subD: "scoring only, on your whole display", halfL: "Left half", halfR: "Right half", adj: "adjacent direction", opp: "opposite direction", free: "free", impose: "you impose this side", change: "change side",
@@ -75,7 +75,7 @@ const T = {
   it: {
     tagline: "Guida la tua anima attraverso le porte del Duat, conquista il favore dei Guardiani… e presenta a Osiride un cuore in perfetto equilibrio.",
     meta: "Da 2 a 5 giocatori · 30 minuti · 8 round", yourName: "Il tuo nome", players: "Giocatori", start: "Entra nel Duat",
-    rules: "Regole", cards: "I materiali", stats: "Statistiche", home: "Home", offer: "Carte Vita disponibili", journal: "Diario della partita",
+    rules: "Regole", cards: "I materiali", stats: "Statistiche", train: "🧠 Allena l'IA", home: "Home", offer: "Carte Vita disponibili", journal: "Diario della partita",
     nhint: n => `Tu contro ${n - 1} avversari${n > 2 ? "" : "o"} · plancia lato ${n <= 3 ? "B" : "A"} · ${n <= 3 ? 4 : n === 4 ? 5 : 6} carte Vita visibili`,
     round: r => r <= 7 ? `Round ${r}/8` : "Round 8/8 · Giudizio", sideFree: "Direzione libera", orient: { L: "Le Colpe", R: "Le Virtù", U: "Le Realizzazioni", D: "La Spiritualità" }, impBy: n => `Direzione imposta da ${n}`, youChoose: "Sei il primo giocatore: scegli la direzione, sarà imposta agli altri.", waitFirst: n => `${n} sceglierà la direzione del round…`, imposedTag: "imposta", sideImp: s => `Direzione imposta: ${T.it[s]}`,
     L: "◀ Sinistra", R: "Destra ▶", U: "▲ Sopra", D: "▼ Sotto", subU: "senza punteggio", subD: "solo punteggio, su tutto il gioco", halfL: "Metà sinistra", halfR: "Metà destra", adj: "direzione adiacente", opp: "direzione opposta", free: "gratis", impose: "imponi questa direzione", change: "cambiare lato",
@@ -178,6 +178,7 @@ $("#homeBtn").onclick = () => { gameId++; closeModal(); $("#game").hidden = true
 $("#rulesBtn").onclick = $("#rulesBtn2").onclick = showRules;
 $("#catBtn").onclick = () => showCatalog("life");
 $("#statsBtn").onclick = () => window.DuatStats ? DuatStats.open() : showStats();
+$("#trainBtn").onclick = () => window.DuatStats && DuatStats.openTrain();
 
 function startGame() {
   const name = $("#pname").value.trim() || t("you");
