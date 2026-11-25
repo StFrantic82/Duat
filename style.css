@@ -343,3 +343,6 @@ button.danger{background:#c0392b;color:#fff;border-color:#8e2a1f}
 .eg-band{background-size:41px 12px,48px 33px}
 .eg-rule{height:12px;background-size:41px 12px}
 @media(min-width:981px){.home-main{margin-top:26px}}
+.frieze.side{max-width:190px;gap:10px}
+.frieze.side img{border-width:2px}
+@media(max-width:980px){.frieze.side img{height:140px}}
