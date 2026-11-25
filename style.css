@@ -346,3 +346,9 @@ button.danger{background:#c0392b;color:#fff;border-color:#8e2a1f}
 .frieze.side{max-width:190px;gap:10px}
 .frieze.side img{border-width:2px}
 @media(max-width:980px){.frieze.side img{height:140px}}
+.seg.two button{font-size:14px;padding:6px 8px}
+.simset{font-size:14px}
+
+.credits{margin:6px 0 0;font-size:14px;color:#5a4128;display:flex;flex-wrap:wrap;gap:4px 6px;justify-content:center;align-items:baseline}
+.credits b{color:#3b2614}.cr-sep{color:#b08a4a;margin:0 4px}
+.credits .cranio{font-family:Georgia,serif;letter-spacing:.06em;text-transform:uppercase;font-size:13px;color:#8a1f1a}

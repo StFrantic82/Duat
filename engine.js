@@ -41,6 +41,17 @@
     { id: 1, L: ["CN", "CN"], R: ["R1"] }, { id: 2, L: ["R2"], R: ["CB", "CB"] },
     { id: 3, L: ["CN"], R: ["R3"] }, { id: 4, L: ["R1"], R: ["CB"] }, { id: 5, L: ["R3"], R: ["R2"] }
   ];
+  // Personnages recommandés (6, sans numéro) : cœurs noirs à gauche, blancs à droite. Ordre de départ aléatoire + compensation.
+  const CHARS_NEW = [
+    { id: 11, art: "n1", hearts: "CN", nh: 1, L: ["R1", "R2", "CN"], R: ["R1", "R3"] },
+    { id: 12, art: "n2", hearts: "CN", nh: 2, L: ["R1", "CN", "CN"], R: ["R1", "R2"] },
+    { id: 13, art: "n3", hearts: "CN", nh: 3, L: ["CN", "CN", "CN"], R: ["R2"] },
+    { id: 14, art: "n4", hearts: "CB", nh: 1, L: ["R1", "R1"], R: ["R2", "R2", "CB"] },
+    { id: 15, art: "n5", hearts: "CB", nh: 2, L: ["R1", "R2"], R: ["R1", "CB", "CB"] },
+    { id: 16, art: "n6", hearts: "CB", nh: 3, L: ["R2"], R: ["CB", "CB", "CB"] }
+  ];
+  const START_SC = [1, 2, 2, 2, 3];
+  const ALL_CHARS = () => CHARS.concat(CHARS_NEW);
   const GUARDIANS = [
     { id: 1, key: "R1", need: 7 }, { id: 2, key: "R2", need: 6 }, { id: 3, key: "R3", need: 5 },
     { id: 4, key: "CN", need: 6 }, { id: 5, key: "CB", need: 6 }, { id: 6, key: "D", need: 5 },
@@ -58,9 +69,10 @@
 
   function newGame(opts) {
     const n = opts.players.length, r = rng(opts.seed || Date.now());
-    const chars = shuffle([1, 2, 3, 4, 5], r).slice(0, n);
+    const set = opts.set === "new" ? "new" : "classic";
+    const chars = shuffle((set === "new" ? CHARS_NEW : CHARS).map(c => c.id), r).slice(0, n);
     const G = {
-      n, r, round: 1, turn: 0, side: null, over: false, log: [],
+      n, r, set, round: 1, turn: 0, side: null, over: false, log: [],
       deck: shuffle(CARDS.map(c => c.id), r),
       gates: shuffle(GUARDIANS.map(g => g.id), r).slice(0, 7),
       revealed: 2, claimed: {}, raPool: RA_TOKENS.slice(),
@@ -68,7 +80,8 @@
       pillars: Array.from({ length: 9 }, () => ({})),
       players: opts.players.map((p, i) => ({ i, name: p.name, bot: !!p.bot, char: chars[i], t: { L: [], R: [], U: [], D: [] }, sc: 1, tokens: [], guardians: [], color: p.color, st: { takes: [], cardCost: 0, dirCost: 0, guardCost: 0, gRiver: 0, gCard: 0, gAnubis: 0, gSc2: 0, horus: 0, first: 0, free: 0, claims: [] } }))
     };
-    G.order = G.players.map(p => p.i).sort((a, b) => G.players[a].char - G.players[b].char);
+    if (set === "new") { G.order = shuffle(G.players.map(p => p.i), r); G.order.forEach((pi, k) => { G.players[pi].sc = START_SC[k]; }); }
+    else G.order = G.players.map(p => p.i).sort((a, b) => G.players[a].char - G.players[b].char);
     G.pillars[0][0] = G.order.slice().reverse();
     refill(G);
     return G;
@@ -84,7 +97,7 @@
   function halfCounts(p, h) {
     const c = { R1: 0, R2: 0, R3: 0, CN: 0, CB: 0, D1: 0, D2: 0, D3: 0, SC: 0 };
     const add = arr => arr.forEach(k => { if (c[k] !== undefined) c[k]++; });
-    add(CHARS[p.char - 1][h]); p.t[h].forEach(id => add(card(id)[h])); p.t.U.forEach(id => add(card(id)[h])); add(p.tokens.filter(t => t.h === h).map(t => t.k));
+    add(charOf(p)[h]); p.t[h].forEach(id => add(card(id)[h])); p.t.U.forEach(id => add(card(id)[h])); add(p.tokens.filter(t => t.h === h).map(t => t.k));
     c.R = c.R1 + c.R2 + c.R3; c.D = c.D1 + c.D2 + c.D3; return c;
   }
   // Un scoring à gauche compte la moitié gauche, à droite la moitié droite ; en bas, tout le jeu.
@@ -94,7 +107,7 @@
   }
   const visIcons = (id, side) => side === "L" ? card(id).L : side === "R" ? card(id).R : side === "U" ? [...card(id).L, ...card(id).R] : [];
   const scoringCards = p => [...p.t.L, ...p.t.R, ...p.t.D];
-  const charOf = p => CHARS[p.char - 1];
+  const charOf = p => ALL_CHARS().find(c => c.id === p.char);
 
   function counts(p) {
     const c = { R1: 0, R2: 0, R3: 0, CN: 0, CB: 0, D1: 0, D2: 0, D3: 0, SC: 0, BAL: 0 };
@@ -219,10 +232,15 @@
   // Réglages de l'IA (entraînables). Les valeurs par défaut sont les réglages d'origine.
   // Réglages entraînés (280 générations, ~240 000 parties simulées, 25/11/2026)
   const DEFAULT_W = {res:  1.064,  gate:  0.152,  guardNear:  0.303,  sc:  3.122,  anubis:  3.393,  horus:  3.833,  horusPair:  1.284,  ra:  7.907,  godGuard:  0.682,  heartFix:  1.715,  heartBad:  0.675,  synergy:  0.637,  balIcon:  4.494,  flatPV:  0.551,  perPV:  0.397,  future:  0.481,  sideGuard:  0.794,  cost:  2.339,  river:  1.365,  top:  1.17,  bottom:  0.11,  claimMax:  2};
-  let W = Object.assign({}, DEFAULT_W);
-  const setWeights = w => { W = Object.assign({}, DEFAULT_W, w || {}); };
-  const getWeights = () => Object.assign({}, W);
-  function evalPlace(G, p, id, side, w = p.w || W) {
+  // IA entraînée séparément pour les Personnages recommandés
+  const DEFAULT_W_NEW = {res:  1.066,  gate:  0.153,  guardNear:  0.229,  sc:  2.537,  anubis:  3.375,  horus:  3.299,  horusPair:  1.49,  ra:  5.067,  godGuard:  0.694,  heartFix:  2.378,  heartBad:  0.625,  synergy:  0.49,  balIcon:  5.398,  flatPV:  0.446,  perPV:  0.249,  future:  0.431,  sideGuard:  0.658,  cost:  2.395,  river:  1.079,  top:  0.05,  bottom:  -0.75,  claimMax:  2};
+  const DEF = { classic: DEFAULT_W, new: DEFAULT_W_NEW };
+  const WS = { classic: Object.assign({}, DEFAULT_W), new: Object.assign({}, DEFAULT_W_NEW) };
+  const setWeights = (w, set = "classic") => { WS[set] = Object.assign({}, DEF[set], w || {}); };
+  const getWeights = (set = "classic") => Object.assign({}, WS[set]);
+  const defaultWeights = (set = "classic") => Object.assign({}, DEF[set]);
+  const wOf = (G, p) => p.w || WS[G.set || "classic"];
+  function evalPlace(G, p, id, side, w = wOf(G, p)) {
     const c = counts(p), cd = card(id), icons = visIcons(id, side), left = ROUNDS - G.round;
     const n = { ...c }; icons.forEach(k => n[k]++); n.R = n.R1 + n.R2 + n.R3; n.D = n.D1 + n.D2 + n.D3; n.diff = Math.abs(n.CN - n.CB);
     let v = side === "U" ? w.top : side === "D" ? w.bottom : 0;
@@ -257,7 +275,7 @@
     return v;
   }
   function botChoose(G, p) {
-    const w = p.w || W; let best = null;
+    const w = wOf(G, p); let best = null;
     options(G, p).forEach(({ slot, side, cost }) => {
       const o = G.offer[slot];
       const v = evalPlace(G, p, o.card, side, w) - cost * w.cost + o.sc * w.river + G.r() * 0.3;
@@ -276,7 +294,7 @@
     return pool.includes("SC2") ? "SC2" : pool.find(t => !/C[NB]/.test(t)) || pool[0];
   }
   function botClaim(G, p, list) {
-    const mx = (p.w || W).claimMax, ok = list.filter(x => x.cost <= mx).sort((a, b) => a.cost - b.cost);
+    const mx = wOf(G, p).claimMax, ok = list.filter(x => x.cost <= mx).sort((a, b) => a.cost - b.cost);
     return ok[0] || null;
   }
   // Le jeton Râ est posé du côté où il rapporte le plus aux scorings déjà en place
@@ -295,7 +313,7 @@
     const rankOf = {}; R.ranked.forEach((r, k) => rankOf[r.p] = k + 1);
     const seat0 = {}; G.pillars[0][0].slice().reverse().forEach((pi, k) => seat0[pi] = k);
     return {
-      t: Date.now(), sim: !!sim, n: G.n, gates: G.gates.slice(), hist: G.hist || [], deckLeft: G.deck.length,
+      t: Date.now(), sim: !!sim, n: G.n, set: G.set, gates: G.gates.slice(), hist: G.hist || [], deckLeft: G.deck.length,
       players: G.players.map(p => {
         const r = R.rows[p.i], c = counts(p), balanced = c.diff === 0;
         return {
@@ -310,13 +328,13 @@
       })
     };
   }
-  async function simGame(n, seed, ws) {
-    const G = newGame({ seed, players: Array.from({ length: n }, (_, i) => ({ name: "IA " + (i + 1), bot: true })) });
+  async function simGame(n, seed, ws, set) {
+    const G = newGame({ seed, set, players: Array.from({ length: n }, (_, i) => ({ name: "IA " + (i + 1), bot: true })) });
     if (ws) G.players.forEach((p, i) => { if (ws[i]) p.w = ws[i]; });
     let k = 0;
     while (!G.over && k++ < 200) await playTurn(G, botChoose(G, curPlayer(G)), botHooks);
     return G;
   }
-  const API = { DEFAULT_W, setWeights, getWeights, summary, simGame, HALF_TOKENS, SIDES, OPP, halfCounts, cardsPV, cardPV, visIcons, scoringCards, CARDS, CHARS, GUARDIANS, RA_TOKENS, GPV, DEVOUR, ROUNDS, newGame, counts, metric, card, charOf, claimable, sideCost, options, curPlayer, playTurn, score, botChoose, botRa, botClaim, botHooks, evalPlace };
+  const API = { DEFAULT_W, DEFAULT_W_NEW, defaultWeights, CHARS_NEW, START_SC, ALL_CHARS, setWeights, getWeights, summary, simGame, HALF_TOKENS, SIDES, OPP, halfCounts, cardsPV, cardPV, visIcons, scoringCards, CARDS, CHARS, GUARDIANS, RA_TOKENS, GPV, DEVOUR, ROUNDS, newGame, counts, metric, card, charOf, claimable, sideCost, options, curPlayer, playTurn, score, botChoose, botRa, botClaim, botHooks, evalPlace };
   if (typeof module !== "undefined") module.exports = API; else root.DUAT = API;
 })(this);
