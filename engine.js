@@ -101,7 +101,7 @@
     const add = arr => arr.forEach(k => c[k]++);
     const ch = charOf(p); add(ch.L); add(ch.R);
     SIDES.forEach(s => p.t[s].forEach(id => add(visIcons(id, s))));
-    scoringCards(p).forEach(id => { const C = card(id).C; if (C && C.t === "bal") c.BAL++; });
+    scoringCards(p).forEach(id => { const C = card(id).C; if (C && (C.t === "bal" || C.bal)) c.BAL++; }); // icône Balance visible (pas en haut)
     p.tokens.forEach(t => { if (c[t.k] !== undefined) c[t.k]++; });
     c.R = c.R1 + c.R2 + c.R3; c.D = c.D1 + c.D2 + c.D3; c.SIDE = Math.max(...SIDES.map(s => p.t[s].length));
     c.diff = Math.abs(c.CN - c.CB);
@@ -197,7 +197,6 @@
 
   function cardPV(id, side, p, balanced) {
     const C = card(id).C; if (!C || side === "U" || C.t === "bal") return 0;
-    if (C.bal && !balanced) return 0;
     if (C.t === "pv") return C.v;
     return perPV(C, p, side);
   }
@@ -243,15 +242,16 @@
     if (n.diff < c.diff) v += (c.diff >= DEVOUR - 1 ? 4 : w.heartFix) * (c.diff - n.diff);
     if (n.diff > c.diff && n.diff < DEVOUR) v -= w.heartBad * (n.diff - c.diff) * (left < 3 ? 2.5 : 1);
     // synergies avec les scorings déjà posés
-    const pot = () => ["L", "R", "D"].reduce((s, sd) => s + p.t[sd].reduce((a, cid) => { const K = card(cid).C; return a + (K && K.t === "per" ? perPV(K, p, sd) * (K.bal ? 0.5 : 1) : 0); }, 0), 0);
+    const pot = () => ["L", "R", "D"].reduce((s, sd) => s + p.t[sd].reduce((a, cid) => { const K = card(cid).C; return a + (K && K.t === "per" ? perPV(K, p, sd) : 0); }, 0), 0);
     const before = pot(); p.t[side].push(id); v += (pot() - before) * w.synergy; p.t[side].pop();
     const pb = n.diff === 0 ? 0.75 : n.diff === 1 ? 0.5 : 0.25;
     const C = cd.C;
     if (C && side !== "U") {
       if (C.t === "bal") v += w.balIcon * pb;
-      else if (C.t === "pv") v += C.v * (C.bal ? pb : 1) * w.flatPV;
+      else if (C.t === "pv") v += C.v * w.flatPV;
       else { const now = side === "D" ? counts(p)[C.icon] : halfCounts(p, side)[C.icon] + icons.filter(k => k === C.icon || (C.icon === "R" && /R/.test(k)) || (C.icon === "D" && /D/.test(k))).length;
-        const exp = now + left * w.future * (C.icon === "R" ? 2 : 1); v += (Math.floor(exp / C.n) * C.v * 0.7 + Math.floor(now / C.n) * C.v * 0.3) * (C.bal ? pb : 1) * w.perPV; }
+        const exp = now + left * w.future * (C.icon === "R" ? 2 : 1); v += (Math.floor(exp / C.n) * C.v * 0.7 + Math.floor(now / C.n) * C.v * 0.3) * w.perPV; }
+      if (C.bal) v += w.balIcon * pb; // icône Balance en plus du scoring
     }
     if (p.t[side].length >= 4) if (G.claimed[7] === undefined && G.gates.includes(7)) v += w.sideGuard;
     return v;
