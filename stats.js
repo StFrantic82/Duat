@@ -1,7 +1,7 @@
 // Duat — statistiques de parties (stockées dans ce navigateur) + simulations entre IA
 {
 const D = window.DUAT, U = window.DuatUI;
-const KEY = "duat_stats_v3", MAX = 5000;
+const KEY = "duat_stats_v2", MAX = 5000;
 const IT = {
 "Effets des cartes":"Effetti delle carte","Balance":"Bilancia","Gardiens":"Guardiani","Scarabées restants":"Scarabei rimasti","Jeton Râ « 2 PV »":"Gettone Ra «2 PV»","Total":"Totale",
 "Ramassés sur la rivière":"Raccolti sul fiume","Symboles Scarabée des cartes":"Simboli Scarabeo delle carte","Anubis":"Anubi","Jeton Râ « 1 Scarabée »":"Gettone Ra «1 Scarabeo»",
@@ -61,7 +61,7 @@ async function simulate(n, np, onProgress) {
 }
 
 /* ---------- entraînement de l'IA ---------- */
-const WKEY = "duat_ai_w_v3";
+const WKEY = "duat_ai_w_v2";
 let tw = (() => { try { return JSON.parse(localStorage.getItem(WKEY) || "null"); } catch (e) { return null; } })();
 if (tw && tw.w) D.setWeights(tw.w);
 const saveW = () => { try { tw ? localStorage.setItem(WKEY, JSON.stringify(tw)) : localStorage.removeItem(WKEY); } catch (e) { } };
@@ -138,7 +138,7 @@ function compute(f) {
     free: avg(P, p => p.free), deck: avg(G, g => g.deckLeft), byN: [2, 3, 4, 5].map(n => { const x = PS.filter(p => p.g.n === n); return { n, games: G.filter(g => g.n === n).length, avg: avg(x, p => p.total), win: avg(x.filter(p => p.win), p => p.total) }; }) };
   // places et personnages
   r.seats = [0, 1, 2, 3, 4].map(s => { const x = P.filter(p => p.seat === s); return x.length ? { s, n: x.length, w: x.filter(p => p.win).length / x.length, exp: avg(x, p => 1 / p.g.n), avg: avg(x.filter(p => !p.dev), p => p.total), dev: pct(x.filter(p => p.dev).length, x.length) } : null; }).filter(Boolean);
-  r.chars = D.CHARS.map(x => x.id).map(c => { const x = P.filter(p => p.char === c); return x.length ? { c, n: x.length, w: x.filter(p => p.win).length / x.length, exp: avg(x, p => 1 / p.g.n), avg: avg(x.filter(p => !p.dev), p => p.total), dev: pct(x.filter(p => p.dev).length, x.length), bal: pct(x.filter(p => p.diff === 0).length, x.length) } : null; }).filter(Boolean);
+  r.chars = [1, 2, 3, 4, 5].map(c => { const x = P.filter(p => p.char === c); return x.length ? { c, n: x.length, w: x.filter(p => p.win).length / x.length, exp: avg(x, p => 1 / p.g.n), avg: avg(x.filter(p => !p.dev), p => p.total), dev: pct(x.filter(p => p.dev).length, x.length), bal: pct(x.filter(p => p.diff === 0).length, x.length) } : null; }).filter(Boolean);
   // composition du score
   r.comp = [["cards", L("Effets des cartes", "Card effects")], ["bal", L("Balance", "Balance")], ["guard", L("Gardiens", "Guardians")], ["scar", L("Scarabées restants", "Scarabs left")], ["ra", L("Jeton Râ « 2 PV »", "Ra token “2 VP”")], ["total", L("Total", "Total")]]
     .map(([k, l]) => ({ k, l, all: avg(PS, p => p[k]), win: avg(W, p => p[k]), lose: avg(LoS, p => p[k]) }));
@@ -197,7 +197,7 @@ function body(r) {
   const ic = U.ic, base = r.baseWin, DL = DIRL();
   const cards = r.cards.filter(c => c.players >= filt.minG).sort({ wr: (a, b) => b.wr - a.wr, rate: (a, b) => b.rate - a.rate, pv: (a, b) => b.pvA - a.pvA, id: (a, b) => a.id - b.id }[filt.sort]);
   const maxRate = Math.max(0.01, ...cards.map(c => c.rate));
-  const charImg = c => `<img class="sthumb" src="assets/c${((c - 1) % 5) + 1}.jpg" alt="">`;
+  const charImg = c => `<img class="sthumb" src="assets/c${c}.jpg" alt="">`;
   return `
   <div class="sgrid">
     <div class="scard"><b>${r.games}</b><span>${L("parties", "games")}</span></div>
@@ -220,7 +220,7 @@ function body(r) {
 
   <h3>${L("Personnages de départ", "Starting characters")}</h3>
   <table class="stab"><tr><th></th><th>${L("Bandeaux", "Banners")}</th><th>${L("Victoires", "Wins")}</th><th>${L("PV moyens", "Average VP")}</th><th>${L("Dévorés", "Devoured")}</th><th>${L("Équilibrés", "Balanced")}</th></tr>
-  ${r.chars.map(c => { const ch = D.CHARS[c.c - 1]; return `<tr><td>${charImg(c.c)} <b>${esc(U.t("charName", ch))}</b></td><td>${ch.L.map(k => ic(k)).join("")} | ${ch.R.map(k => ic(k)).join("")}</td><td>${wcell(c.w, c.exp, c.n)}</td><td>${f1(c.avg)}</td><td>${c.dev}%</td><td>${c.bal}%</td></tr>`; }).join("")}</table>
+  ${r.chars.map(c => { const ch = D.CHARS[c.c - 1]; return `<tr><td>${charImg(c.c)} <b>${c.c}</b></td><td>${ch.L.map(k => ic(k)).join("")} | ${ch.R.map(k => ic(k)).join("")}</td><td>${wcell(c.w, c.exp, c.n)}</td><td>${f1(c.avg)}</td><td>${c.dev}%</td><td>${c.bal}%</td></tr>`; }).join("")}</table>
 
   <h3>${L("D'où viennent les points", "Where points come from")}</h3>
   <table class="stab"><tr><th></th>${th3()}</tr>${r.comp.map(c => row3(c.k === "total" ? `<b>${c.l}</b>` : c.l, c)).join("")}</table>
