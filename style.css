@@ -227,3 +227,4 @@ button.danger{background:#c0392b;color:#fff;border-color:#8e2a1f}
 .lang button{display:inline-flex;align-items:center;gap:6px}.lang button svg{width:20px;height:14px;border-radius:2px;box-shadow:0 0 0 1px #0003;flex:none}
 .bar .lang button{background:transparent;color:#f2e5c9}.bar .lang button[aria-pressed=true]{background:#f2e5c9;color:#2c1b10}
 .simbox .clearTop{margin-left:auto}
+.sheet h4{font-size:17px;margin:16px 0 6px}

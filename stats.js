@@ -31,7 +31,7 @@ const IT = {
 "Toutes":"Tutte","Avec vous":"Con te","Simulations IA":"Simulazioni IA","Aucune partie enregistrée pour ces filtres. Jouez une partie ou lancez des simulations ci-dessus.":"Nessuna partita registrata per questi filtri. Gioca una partita o avvia delle simulazioni qui sopra.",
 "Copier les données (JSON)":"Copia i dati (JSON)","Confirmer l'effacement":"Conferma la cancellazione","Effacer":"Cancella",
 "Chaque partie terminée sur cet appareil est enregistrée dans ce navigateur (5 000 au maximum). Les simulations utilisent les IA du prototype : elles montrent des tendances, pas le jeu de vrais joueurs.":"Ogni partita terminata su questo dispositivo viene salvata in questo browser (5.000 al massimo). Le simulazioni usano le IA del prototipo: mostrano tendenze, non il gioco di giocatori reali.",
-"Démarrage…":"Avvio…","Chaque joueur commence avec 1 scarabée. Chaque scarabée restant rapporte 2 PV en fin de partie.":"Ogni giocatore inizia con 1 scarabeo. Ogni scarabeo rimasto vale 2 PV a fine partita.","Victoires partagées":"Vittorie condivise","Terminé":"Finito","Données copiées":"Dati copiati","Copie impossible ici":"Copia impossibile qui","Effacer les statistiques":"Cancella le statistiche","Statistiques effacées":"Statistiche cancellate","Statistiques":"Statistiche","Fermer":"Chiudi","er":"º","e":"º"
+"Démarrage…":"Avvio…","Scarabées restants en fin de partie : répartition":"Scarabei rimasti a fine partita: distribuzione","Maximum observé":"Massimo osservato","Chaque joueur commence avec 1 scarabée. Chaque scarabée restant rapporte 2 PV en fin de partie.":"Ogni giocatore inizia con 1 scarabeo. Ogni scarabeo rimasto vale 2 PV a fine partita.","Victoires partagées":"Vittorie condivise","Terminé":"Finito","Données copiées":"Dati copiati","Copie impossible ici":"Copia impossibile qui","Effacer les statistiques":"Cancella le statistiche","Statistiques effacées":"Statistiche cancellate","Statistiques":"Statistiche","Fermer":"Chiudi","er":"º","e":"º"
 };
 const EN = () => U.lang() === "en", L = (fr, en) => EN() ? en : U.lang() === "it" ? (IT[fr] !== undefined ? IT[fr] : fr) : fr;
 const pct = (a, b) => b ? Math.round(100 * a / b) : 0;
@@ -94,6 +94,9 @@ function compute(f) {
   r.eco = [["gRiver", L("Ramassés sur la rivière", "Collected from the river"), 1], ["gCard", L("Symboles Scarabée des cartes", "Scarab symbols on cards"), 1], ["gAnubis", L("Anubis", "Anubis"), 1], ["gSc2", L("Jeton Râ « 1 Scarabée »", "Ra token “1 scarab”"), 1],
     ["cardCost", L("Dépensés : cartes", "Spent: cards"), 0], ["dirCost", L("Dépensés : changement de direction", "Spent: direction change"), 0], ["guardCost", L("Dépensés : Gardiens", "Spent: Guardians"), 0]].map(([k, l, g]) => Object.assign({ k, l, g }, E(k)));
   r.eco.push({ k: "left", l: L("Restants en fin de partie", "Left at game end"), all: avg(P, p => p.scLeft), win: avg(W, p => p.scLeft), lose: avg(Lo, p => p.scLeft) });
+  // répartition des scarabées restants
+  r.scDist = [0, 1, 2, 3, 4, 5].map(k => { const x = P.filter(p => k < 5 ? p.scLeft === k : p.scLeft >= 5); return { k, p: pct(x.length, P.length), n: x.length, w: x.length ? x.filter(p => p.win).length / x.length : null, avg: avg(x.filter(p => !p.dev), p => p.total) }; });
+  r.scMax = P.reduce((m, p) => Math.max(m, p.scLeft), 0);
   // dieux
   const tokN = p => p.tokens.length;
   r.gods = [[L("Scarabées gagnés grâce à Anubis", "Scarabs gained from Anubis"), p => p.eco.gAnubis], [L("Cartes piochées grâce à Horus", "Cards drawn from Horus"), p => p.horus], [L("Jetons Râ obtenus", "Ra tokens obtained"), tokN], [L("Manches jouées en premier", "Rounds played first"), p => p.first]]
@@ -175,6 +178,10 @@ function body(r) {
   <table class="stab"><tr><th></th>${th3()}</tr>${r.eco.map(e => row3(`${ic("SC")} ${e.g ? "+ " : e.k === "left" || e.k === "free" ? "" : "− "}${e.l}`, e)).join("")}</table>
   <p class="snote">${L("Chaque joueur commence avec 1 scarabée. Chaque scarabée restant rapporte 2 PV en fin de partie.", "Each player starts with 1 scarab. Each remaining scarab is worth 2 VP at game end.")}</p>
 
+  <h4>${L("Scarabées restants en fin de partie : répartition", "Scarabs left at game end: distribution")}</h4>
+  <table class="stab"><tr><th>${ic("SC")}</th><th>${L("Joueurs", "Players")}</th><th>${L("Victoires", "Wins")}</th><th>${L("PV moyens", "Average VP")}</th></tr>
+  ${r.scDist.map(d => `<tr><td><b>${d.k < 5 ? d.k : "5+"}</b></td><td>${bar(d.p, 100, "var(--turq)")} ${d.p}%</td><td>${d.n ? wcell(d.w, base, d.n) : "—"}</td><td>${f1(d.avg)}</td></tr>`).join("")}</table>
+  <p class="snote">${L("Maximum observé", "Highest observed")} : ${r.scMax}.</p>
   <h3>${L("Dieux et ordre du tour", "Gods and turn order")}</h3>
   <table class="stab"><tr><th></th>${th3()}</tr>${r.gods.map(g => row3(g.l, g)).join("")}</table>
 
