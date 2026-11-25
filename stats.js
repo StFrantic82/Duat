@@ -100,7 +100,7 @@ async function train(onUpdate) {
 function trainHTML() {
   const cur = D.getWeights(), def = D.DEFAULT_W;
   const changed = Object.keys(def).filter(k => Math.abs(cur[k] - def[k]) > 1e-9);
-  return `<details class="trainbox" ${training || tLog.length ? "open" : ""}><summary><b>🧠 ${L("Entraînement de l'IA", "AI training")}</b> · ${tw ? L(`IA entraînée (${tw.adopted} réglage(s) adopté(s))`, `trained AI (${tw.adopted} setting(s) adopted)`) : L("IA d'origine", "original AI")}</summary>
+  return `<details class="trainbox" open><summary><b>🧠 ${L("Entraînement de l'IA", "AI training")}</b> · ${tw ? L(`IA entraînée (${tw.adopted} réglage(s) adopté(s))`, `trained AI (${tw.adopted} setting(s) adopted)`) : L("IA d'origine", "original AI")}</summary>
    <p class="snote">${L("À chaque génération, une IA « challenger » aux réglages légèrement modifiés affronte l'IA actuelle (une place sur deux). Ses réglages sont adoptés s'ils gagnent nettement plus que leur part attendue (seuil statistique ~95 %). L'IA adoptée est utilisée dans vos parties et dans les simulations, dans ce navigateur.", "Each generation, a “challenger” AI with slightly modified settings plays against the current AI (every other seat). Its settings are adopted if they win clearly more than their expected share (~95% statistical threshold). The adopted AI is used in your games and in simulations, in this browser.")}</p>
    <div class="simbox"><label><input type="number" id="tGens" min="1" max="200" value="${tGens}"> ${L("générations", "generations")}</label>
     <label>× <input type="number" id="tPer" min="20" max="2000" value="${tPer}"> ${L("parties", "games")}</label>

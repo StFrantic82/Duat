@@ -250,3 +250,4 @@ button.danger{background:#c0392b;color:#fff;border-color:#8e2a1f}
 .trainbox{margin:10px 0;padding:10px 14px;border-radius:12px;border:1px solid var(--line);background:light-dark(#f6ecd5,#2a1f14)}
 .trainbox summary{cursor:pointer;min-height:36px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .trainbox input{width:80px}
+.trainbox{border:2px solid var(--gold)}.trainbox summary b{font-family:"Marcellus SC",serif;font-size:21px;color:var(--lapis)}
