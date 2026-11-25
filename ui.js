@@ -408,6 +408,34 @@ function showStats() {
     <div class="choices"><button id="resetStats">${t("reset")}</button></div>`);
   $("#resetStats").onclick = () => { store.set("stats", { played: 0, wins: 0, best: 0, total: 0, dev: 0 }); showStats(); };
 }
+// Zoom au survol des éléments du jeu (souris uniquement)
+(function zoomInit() {
+  if (!window.matchMedia || !matchMedia("(hover: hover) and (pointer: fine)").matches) return;
+  const pop = document.createElement("div"); pop.id = "zoomPop"; document.body.appendChild(pop);
+  const SEL = ".lc, .charT .face, .gpair img, .rtok img, .trophies img, .gch img, .frieze img, .gslot";
+  let cur = null;
+  const place = e => { const r = pop.getBoundingClientRect(), m = 14; let x = e.clientX + 22, y = e.clientY - r.height / 2;
+    if (x + r.width > innerWidth - m) x = e.clientX - r.width - 22; y = Math.max(m, Math.min(y, innerHeight - r.height - m));
+    pop.style.left = Math.max(m, x) + "px"; pop.style.top = y + "px"; };
+  document.addEventListener("mouseover", e => {
+    const el = e.target.closest && e.target.closest(SEL);
+    if (el === cur) return; cur = el;
+    if (!el || el.closest("#zoomPop")) { pop.style.display = "none"; return; }
+    const im = el.tagName === "IMG" ? el : el.classList.contains("gslot") ? el.querySelector("img") : null;
+    const r = (im || el).getBoundingClientRect(); if (r.height < 20) { pop.style.display = "none"; return; }
+    const k = Math.max(1.4, Math.min(3.2, Math.min(420, innerHeight * .7) / r.height));
+    if (k * r.height < r.height + 30) { pop.style.display = "none"; return; }
+    if (im) pop.innerHTML = `<img class="zimg" src="${im.src}" style="width:${r.width * k}px;height:${r.height * k}px;object-fit:contain">`;
+    else { const c = el.cloneNode(true); c.classList.remove("dimL", "dimR", "dimE", "dimT"); c.removeAttribute("title");
+      c.style.width = r.width + "px"; c.style.height = r.height + "px"; c.style.margin = "0";
+      pop.innerHTML = `<div style="width:${r.width * k}px;height:${r.height * k}px"><div class="zin" style="transform:scale(${k});width:${r.width}px"></div></div>`;
+      pop.querySelector(".zin").appendChild(c); }
+    pop.style.display = "block"; place(e);
+  });
+  document.addEventListener("mousemove", e => { if (cur && pop.style.display === "block") place(e); });
+  document.addEventListener("mousedown", () => { pop.style.display = "none"; });
+  document.addEventListener("scroll", () => { pop.style.display = "none"; cur = null; }, true);
+})();
 window.DuatUI = { charLabel, ic, cardHTML, raImg, gname: k => T[lang].g[k], lang: () => lang, openSheet, state: () => ({ G, ui }), startGame, t };
 applyLang();
 }

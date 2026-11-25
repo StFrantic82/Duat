@@ -8,7 +8,7 @@ const IT = {
 "Dépensés : cartes":"Spesi: carte","Dépensés : changement de direction":"Spesi: cambio di direzione","Dépensés : Gardiens":"Spesi: Guardiani","Restants en fin de partie":"Rimasti a fine partita",
 "Prises gratuites forcées (rien de payable)":"Prese gratuite forzate (nulla di pagabile)","Scarabées gagnés grâce à Anubis":"Scarabei ottenuti grazie ad Anubi","Cartes piochées grâce à Horus":"Carte pescate grazie a Horus",
 "Jetons Râ obtenus":"Gettoni Ra ottenuti","Manches jouées en premier":"Round giocati per primo","◀ Gauche":"◀ Sinistra","Droite ▶":"Destra ▶","▲ Haut":"▲ Sopra","▼ Bas":"▼ Sotto",
-"Tous":"Tutti","Gagnants":"Vincitori","Perdants":"Perdenti","parties":"partite","PV moyens par joueur":"PV medi per giocatore","PV moyens du gagnant":"PV medi del vincitore",
+"Tous":"Tutti","Cliquer pour trier":"Clicca per ordinare","Gagnants":"Vincitori","Perdants":"Perdenti","parties":"partite","PV moyens par joueur":"PV medi per giocatore","PV moyens du gagnant":"PV medi del vincitore",
 "PV d'écart entre le 1er et le 2e":"PV di scarto tra 1° e 2°","des joueurs dévorés par Ammout":"dei giocatori divorati da Ammit","des joueurs parfaitement équilibrés":"dei giocatori in perfetto equilibrio",
 "prises gratuites forcées par joueur":"prese gratuite forzate per giocatore","cartes restant dans la pioche":"carte rimaste nel mazzo",
 "Référence : taux de victoire attendu si tout est équilibré":"Riferimento: percentuale di vittoria attesa se tutto è bilanciato","En vert au-dessus, en rouge en dessous.":"In verde sopra, in rosso sotto.",
@@ -279,9 +279,31 @@ function body(r) {
   <p class="snote">${L("« Prise par » : part des joueurs ayant posé la carte. « Victoires » : taux de victoire de ces joueurs ; « Écart » : en points de % par rapport à la référence. « PV produits » : points rapportés en moyenne par son scoring. Une carte peut gagner souvent parce qu'elle arrive chez un joueur déjà en tête : à lire comme une tendance.", "“Taken by”: share of players who placed the card. “Wins”: win rate of those players; “Gap”: in % points vs the reference. “VP produced”: average points from its scoring. A card may win often because it lands with a player already ahead: read it as a trend.")}</p>`;
 }
 let view = "stats";
+// Tri des tableaux : clic sur un en-tête (2e clic = ordre inverse). L'état est gardé entre deux rendus.
+const sortSt = {};
+const cellVal = td => { const t = (td ? td.textContent : "").replace(/\u2212/g, "-").replace(/\s/g, ""); const m = t.match(/-?\d+(?:[.,]\d+)?/); return m ? parseFloat(m[0].replace(",", ".")) : (t === "" || t === "—" || t === "-" ? null : t.toLowerCase()); };
+function sortTable(tb, col, dir) {
+  const rows = [...tb.rows].slice(1), body = tb.rows[0].parentNode;
+  rows.sort((a, b) => { const x = cellVal(a.cells[col]), y = cellVal(b.cells[col]);
+    if (x === null && y === null) return 0; if (x === null) return 1; if (y === null) return -1;
+    const c = typeof x === "number" && typeof y === "number" ? x - y : String(x).localeCompare(String(y), undefined, { numeric: true });
+    return dir * c; }).forEach(r => body.appendChild(r));
+  [...tb.rows[0].cells].forEach((th, i) => th.dataset.sdir = i === col ? (dir > 0 ? "asc" : "desc") : "");
+}
+function sortable(B) {
+  B.querySelectorAll("table.stab").forEach((tb, ti) => {
+    if (tb.rows.length < 3) return;
+    const key = view + ":" + ti + ":" + tb.rows[0].textContent.slice(0, 40);
+    [...tb.rows[0].cells].forEach((th, i) => { th.classList.add("sortable"); th.title = L("Cliquer pour trier", "Click to sort");
+      th.onclick = () => { const st = sortSt[key]; const first = cellVal(tb.rows[1].cells[i]);
+        const dir = st && st[0] === i ? -st[1] : (typeof first === "number" ? -1 : 1);
+        sortSt[key] = [i, dir]; sortTable(tb, i, dir); }; });
+    if (sortSt[key]) sortTable(tb, sortSt[key][0], sortSt[key][1]);
+  });
+}
 function render() {
   const B = $("#statsBody"); if (!B) return;
-  if (view === "train") { B.innerHTML = trainHTML(); return; }
+  if (view === "train") { B.innerHTML = trainHTML(); sortable(B); return; }
   const r = compute(filt);
   const me = r.me || compute({ src: "all", n: "all" }).me || { n: 0 };
   const hdr = `<div class="simbox"><b>${L("Simuler des parties entre IA", "Simulate AI games")}</b>
@@ -298,6 +320,7 @@ function render() {
   B.innerHTML = hdr + (r.games ? body(r) : `<div class="sempty">${L("Aucune partie enregistrée pour ces filtres. Jouez une partie ou lancez des simulations ci-dessus.", "No games recorded for these filters. Play a game or run simulations above.")}</div>`) +
     `<div class="sfoot"><button type="button" id="statsCopy">${L("Copier les données (JSON)", "Copy data (JSON)")}</button><button type="button" data-act="clear" class="${confirmClear ? "danger" : ""}">${confirmClear ? L("Confirmer l'effacement", "Confirm reset") : L("Effacer", "Reset")}</button></div>
      <p class="snote">${L("Chaque partie terminée sur cet appareil est enregistrée dans ce navigateur (5 000 au maximum). Les simulations utilisent les IA du prototype : elles montrent des tendances, pas le jeu de vrais joueurs.", "Every game finished on this device is saved in this browser (5,000 max). Simulations use the prototype AIs: they show trends, not how real players play.")}</p>`;
+  sortable(B);
 }
 function onClick(e) {
   const b = e.target.closest("button"); if (!b || !$("#statsBody") || !$("#statsBody").contains(b)) return;

@@ -353,3 +353,12 @@ button.danger{background:#c0392b;color:#fff;border-color:#8e2a1f}
 .credits b{color:#3b2614}.cr-sep{color:#b08a4a;margin:0 4px}
 .credits .cranio{font-family:Georgia,serif;letter-spacing:.06em;text-transform:uppercase;font-size:13px;color:#8a1f1a}
 .credits{align-items:center}.cranio-logo{height:46px;width:auto;vertical-align:middle}
+
+th.sortable{cursor:pointer;user-select:none;white-space:nowrap}
+th.sortable:hover{background:rgba(176,138,74,.18)}
+th.sortable::after{content:"⇅";opacity:.3;margin-left:4px;font-size:.85em}
+th.sortable[data-sdir="asc"]::after{content:"▲";opacity:.9}
+th.sortable[data-sdir="desc"]::after{content:"▼";opacity:.9}
+#zoomPop{position:fixed;z-index:9999;pointer-events:none;display:none;filter:drop-shadow(0 10px 24px rgba(40,20,5,.45))}
+#zoomPop .zin{transform-origin:0 0}
+#zoomPop img.zimg{display:block;border-radius:8px;max-width:none}
