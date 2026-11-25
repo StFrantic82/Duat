@@ -53,7 +53,8 @@
 
   function rng(seed) { let s = seed >>> 0 || 1; return () => { s ^= s << 13; s >>>= 0; s ^= s >>> 17; s ^= s << 5; s >>>= 0; return s / 4294967296; }; }
   function shuffle(a, r) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
-  const costsFor = n => (n <= 3 ? [0, 0, 1, 2] : [0, 0, 1, 1, 2, 2]);
+  // Plateau 2–3 j. : 4 emplacements · plateau 4–5 j. : 6 emplacements, le dernier (2 scarabées) seulement à 5 joueurs
+  const costsFor = n => n <= 3 ? [0, 0, 1, 2] : n === 4 ? [0, 0, 1, 1, 2] : [0, 0, 1, 1, 2, 2];
 
   function newGame(opts) {
     const n = opts.players.length, r = rng(opts.seed || Date.now());
