@@ -362,3 +362,4 @@ th.sortable[data-sdir="desc"]::after{content:"▼";opacity:.9}
 #zoomPop{position:fixed;z-index:9999;pointer-events:none;display:none;filter:drop-shadow(0 10px 24px rgba(40,20,5,.45))}
 #zoomPop .zin{transform-origin:0 0}
 #zoomPop img.zimg{display:block;border-radius:8px;max-width:none}
+.setic{display:inline-flex;gap:1px;align-items:center}

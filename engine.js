@@ -17,7 +17,9 @@
     "41|D3 R1|2PV / D|D1 R2", "42|D1|3PV / D|D2", "43|CN|4PV / D|CB",
     "44|CN CN|7PV/R1R1|SC", "45|R1|12PV/R1R1R1|SC SC", "46|R3|8PV/R2R2|CB CB", "47|R2 R1|14PV/R2R2R2|R3",
     "48|CN CN|10PV/R3R3|R1", "49|R3|16PV/R3R3R3|CB CB", "50|R1R1R1|9PV/CNCN|/", "51|CN SC|15PV/CNCNCN|/",
-    "52|/|9PV/CBCB|R2R2", "53|/|15PV/CBCBCB|R1R1"
+    "52|/|9PV/CBCB|R2R2", "53|/|15PV/CBCBCB|R1R1",
+    "54|SC D2|9PV/D1|R1", "55|CN|9PV/D2|SC D3", "56|R2 SC|9PV/D3|D1", "57|R2|7PV/SET|R3",
+    "58|R1 R2|3PV/BAL (Balance)|CB", "59|CN|4PV/BAL (Balance)|R3", "60|/|5PV/BAL (Balance)|/"
   ];
   const tok = s => (s.match(/R[123]|CN|CB|D[123]|SC/g) || []);
   function parseCenter(s) {
@@ -29,7 +31,7 @@
     const m = s.match(/^(\d+)\s*(?:PV)?\s*(?:\/\s*(.*))?$/);
     const v = +m[1];
     if (!m[2]) return { t: "pv", v, bal };
-    const icons = m[2].match(/R[123]|CN|CB|DD|D|R/g);
+    const icons = m[2].match(/BAL|SET|D[123]|R[123]|CN|CB|DD|D|R/g);
     if (icons[0] === "DD") return { t: "per", v, icon: "D", n: 2, bal };
     return { t: "per", v, icon: icons[0], n: icons.length, bal };
   }
@@ -98,7 +100,9 @@
     const c = { R1: 0, R2: 0, R3: 0, CN: 0, CB: 0, D1: 0, D2: 0, D3: 0, SC: 0 };
     const add = arr => arr.forEach(k => { if (c[k] !== undefined) c[k]++; });
     add(charOf(p)[h]); p.t[h].forEach(id => add(card(id)[h])); p.t.U.forEach(id => add(card(id)[h])); add(p.tokens.filter(t => t.h === h).map(t => t.k));
-    c.R = c.R1 + c.R2 + c.R3; c.D = c.D1 + c.D2 + c.D3; return c;
+    c.R = c.R1 + c.R2 + c.R3; c.D = c.D1 + c.D2 + c.D3; c.SET = Math.min(c.R1, c.R2, c.R3);
+    c.BAL = p.t[h].filter(id => { const K = card(id).C; return K && (K.t === "bal" || K.bal); }).length + p.tokens.filter(t => t.k === "BAL" && t.h === h).length;
+    return c;
   }
   // Un scoring à gauche compte la moitié gauche, à droite la moitié droite ; en bas, tout le jeu.
   function perPV(C, p, side) {
@@ -116,7 +120,7 @@
     SIDES.forEach(s => p.t[s].forEach(id => add(visIcons(id, s))));
     scoringCards(p).forEach(id => { const C = card(id).C; if (C && (C.t === "bal" || C.bal)) c.BAL++; }); // icône Balance visible (pas en haut)
     p.tokens.forEach(t => { if (c[t.k] !== undefined) c[t.k]++; });
-    c.R = c.R1 + c.R2 + c.R3; c.D = c.D1 + c.D2 + c.D3; c.SIDE = Math.max(...SIDES.map(s => p.t[s].length));
+    c.R = c.R1 + c.R2 + c.R3; c.D = c.D1 + c.D2 + c.D3; c.SET = Math.min(c.R1, c.R2, c.R3); c.SIDE = Math.max(...SIDES.map(s => p.t[s].length));
     c.diff = Math.abs(c.CN - c.CB);
     return c;
   }
@@ -267,8 +271,10 @@
     if (C && side !== "U") {
       if (C.t === "bal") v += w.balIcon * pb;
       else if (C.t === "pv") v += C.v * w.flatPV;
-      else { const now = side === "D" ? counts(p)[C.icon] : halfCounts(p, side)[C.icon] + icons.filter(k => k === C.icon || (C.icon === "R" && /R/.test(k)) || (C.icon === "D" && /D/.test(k))).length;
-        const exp = now + left * w.future * (C.icon === "R" ? 2 : 1); v += (Math.floor(exp / C.n) * C.v * 0.7 + Math.floor(now / C.n) * C.v * 0.3) * w.perPV; }
+      else { let now;
+        if (C.icon === "SET" || C.icon === "BAL") { p.t[side].push(id); now = side === "D" ? counts(p)[C.icon] : halfCounts(p, side)[C.icon]; p.t[side].pop(); }
+        else now = side === "D" ? counts(p)[C.icon] : halfCounts(p, side)[C.icon] + icons.filter(k => k === C.icon || (C.icon === "R" && /R/.test(k)) || (C.icon === "D" && /D/.test(k))).length;
+        const exp = now + left * w.future * (C.icon === "R" ? 2 : C.icon === "SET" ? 0.4 : C.icon === "BAL" ? 0.5 : 1); v += (Math.floor(exp / C.n) * C.v * 0.7 + Math.floor(now / C.n) * C.v * 0.3) * w.perPV; }
       if (C.bal) v += w.balIcon * pb; // icône Balance en plus du scoring
     }
     if (p.t[side].length >= 4) if (G.claimed[7] === undefined && G.gates.includes(7)) v += w.sideGuard;
@@ -304,7 +310,7 @@
     (Math.random() < 0.5 ? ["L", "R"] : ["R", "L"]).forEach(h => { p.tokens.push({ k, h }); const v = pot(); p.tokens.pop(); if (v > bv) { bv = v; best = h; } });
     return best;
   }
-  const HALF_TOKENS = ["R1", "R2", "R3", "CN", "CB"];
+  const HALF_TOKENS = ["R1", "R2", "R3", "CN", "CB", "BAL"];
   const botHooks = { ra: (G, p) => { const k = botRa(G, p); return { k, h: HALF_TOKENS.includes(k) ? bestHalf(p, k) : "L" }; }, claim: (G, p, l) => botClaim(G, p, l) };
 
   // Résumé compact d'une partie terminée, pour les statistiques
