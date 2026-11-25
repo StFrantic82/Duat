@@ -87,10 +87,10 @@
     add(CHARS[p.char - 1][h]); p.t[h].forEach(id => add(card(id)[h])); p.t.U.forEach(id => add(card(id)[h])); add(p.tokens.filter(t => t.h === h).map(t => t.k));
     c.R = c.R1 + c.R2 + c.R3; c.D = c.D1 + c.D2 + c.D3; return c;
   }
-  // Un scoring à gauche compte la moitié gauche, à droite la moitié droite ; en bas, la meilleure des deux.
+  // Un scoring à gauche compte la moitié gauche, à droite la moitié droite ; en bas, tout le jeu.
   function perPV(C, p, side) {
     const f = h => Math.floor(halfCounts(p, h)[C.icon] / C.n) * C.v;
-    return side === "D" ? Math.max(f("L"), f("R")) : f(side);
+    return side === "D" ? Math.floor(counts(p)[C.icon] / C.n) * C.v : f(side);
   }
   const visIcons = (id, side) => side === "L" ? card(id).L : side === "R" ? card(id).R : side === "U" ? [...card(id).L, ...card(id).R] : [];
   const scoringCards = p => [...p.t.L, ...p.t.R, ...p.t.D];
@@ -244,7 +244,7 @@
     if (C && side !== "U") {
       if (C.t === "bal") v += 5 * pb;
       else if (C.t === "pv") v += C.v * (C.bal ? pb : 1);
-      else { const now = side === "D" ? Math.max(halfCounts(p, "L")[C.icon], halfCounts(p, "R")[C.icon]) : halfCounts(p, side)[C.icon] + icons.filter(k => k === C.icon || (C.icon === "R" && /R/.test(k)) || (C.icon === "D" && /D/.test(k))).length;
+      else { const now = side === "D" ? counts(p)[C.icon] : halfCounts(p, side)[C.icon] + icons.filter(k => k === C.icon || (C.icon === "R" && /R/.test(k)) || (C.icon === "D" && /D/.test(k))).length;
         const exp = now + left * 0.3 * (C.icon === "R" ? 2 : 1); v += (Math.floor(exp / C.n) * C.v * 0.7 + Math.floor(now / C.n) * C.v * 0.3) * (C.bal ? pb : 1) * 0.9; }
     }
     if (p.t[side].length >= 4) if (G.claimed[7] === undefined && G.gates.includes(7)) v += 0.8;
