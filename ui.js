@@ -5,8 +5,8 @@ const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;"
 const store = { get(k, d) { try { const v = localStorage.getItem("duat-" + k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem("duat-" + k, JSON.stringify(v)); } catch (e) { } } };
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-const TITLES = { 1: "Going to the temple", 2: "Going to the temple", 3: "Going to the temple", 5: "Funeral Vigil", 6: "Linen Wrappings", 7: "The Falcon Amulet", 8: "Prayer to Horus", 9: "The Protective Eye", 10: "Prayer at Dawn", 11: "Incense for Ra", 12: "Offering to the Sun", 13: "Morning Hymn", 16: "Offering Grain to the Temple", 17: "Carving a Divine Statue", 18: "The Festive Banquet", 19: "Copying a Sacred Hymn" };
-const HAS_ART = id => id <= 19;
+const TITLES = { 1: "Going to the temple", 2: "Going to the temple", 3: "Going to the temple", 5: "Funeral Vigil", 6: "Linen Wrappings", 7: "The Falcon Amulet", 8: "Prayer to Horus", 9: "The Protective Eye", 10: "Prayer at Dawn", 11: "Incense for Ra", 12: "Offering to the Sun", 13: "Morning Hymn", 16: "Offering Grain to the Temple", 17: "Carving a Divine Statue", 18: "The Festive Banquet", 19: "Copying a Sacred Hymn", 20: "Stolen Offerings", 21: "The Temple Fields", 22: "Clothing the Divine Statue", 23: "The Village Festival", 24: "The Festival Calendar", 25: "Bread for the Departed", 26: "Bribing an Official", 27: "Falsified Accounts", 28: "The Shifted Boundary Stone", 29: "False Weights", 30: "Clothing the Needy", 31: "Sharing the Grain", 32: "Tending the Sick", 33: "Welcoming a Traveler", 34: "Brewing Beer" };
+const HAS_ART = id => id <= 34;
 const COLORS = ["#2f62c4", "#c0392b", "#14a08f", "#e3a21a", "#8e44ad"];
 const BA = { "#2f62c4": "blue", "#c0392b": "red", "#14a08f": "teal", "#e3a21a": "gold", "#8e44ad": "purple" };
 const ba = (p, cls = "dot") => `<img class="${cls}" src="assets/ba_${BA[p.color] || "red"}.png" alt="" title="${esc(p.name)}">`;
@@ -112,7 +112,7 @@ const IMG = { R1: "iR1", R2: "iR2", R3: "iR3", CN: "iCN", CB: "iCB", D1: "iD1", 
 function ic(k, cls = "ic") {
   if (k === "SC") return `<img class="${cls}" src="assets/scarab.png" alt="Scarabée">`;
   if (k === "BAL") return `<img class="${cls}" src="assets/balance.png" alt="Balance">`;
-  if (k === "R") return ["R1", "R2", "R3"].map(x => ic(x, cls)).join("");
+  if (k === "R") return `<img class="${cls}" src="assets/iANY.png" alt="?" title="${esc(({ fr: "N'importe quelle ressource", en: "Any resource", it: "Qualsiasi risorsa" })[lang])}">`;
   return `<img class="${cls}" src="assets/${IMG[k]}.png" alt="${esc(T[lang].g[k] || k)}" title="${esc(T[lang].g[k] || k)}">`;
 }
 function effHTML(C) {
