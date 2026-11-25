@@ -125,7 +125,7 @@ function effHTML(C) {
 }
 function cardHTML(id, o = {}) {
   const c = D.card(id), ttl = TITLES[id] || "";
-  const art = HAS_ART(id) ? `<img class="art" src="assets/a${id}.jpg" alt="" loading="lazy">` : `<img class="art ph" src="assets/medal.png" alt="">`;
+  const art = HAS_ART(id) ? `<img class="art" src="assets/a${id}.jpg?v=43" alt="" loading="lazy">` : `<img class="art ph" src="assets/medal.png" alt="">`;
   const dim = ({ L: "dimR", R: "dimL", U: "dimE", D: "dimT" })[o.side] || "";
   const scs = o.sc ? `<div class="scs">${Array(o.sc).fill('<img src="assets/scarab.png" alt="">').join("")}</div>` : "";
   return `<div class="lc ${dim}" title="${esc(ttl || t("cardN", id))}">${art}<div class="ttl">${esc(ttl)}</div>
