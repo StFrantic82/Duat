@@ -37,10 +37,17 @@
     const [id, L, C, R] = l.split("|");
     return { id: +id, L: tok(L), C: parseCenter(C), R: tok(R) };
   });
+  // 6 Personnages sans numéro : 1, 2 ou 3 cœurs noirs (à gauche) ou blancs (à droite), équilibrés par simulation
   const CHARS = [
-    { id: 1, L: ["CN", "CN"], R: ["R1"] }, { id: 2, L: ["R2"], R: ["CB", "CB"] },
-    { id: 3, L: ["CN"], R: ["R3"] }, { id: 4, L: ["R1"], R: ["CB"] }, { id: 5, L: ["R3"], R: ["R2"] }
+    { id: 1, hearts: "CN", nh: 1, L: ["CN", "R1", "R2"], R: ["R1", "R3"] },
+    { id: 2, hearts: "CN", nh: 2, L: ["CN", "CN", "R1"], R: ["R2", "R1"] },
+    { id: 3, hearts: "CN", nh: 3, L: ["CN", "CN", "CN"], R: ["R2"] },
+    { id: 4, hearts: "CB", nh: 1, L: ["R1", "R1"], R: ["CB", "R2", "R2"] },
+    { id: 5, hearts: "CB", nh: 2, L: ["R2", "R1"], R: ["CB", "CB", "R1"] },
+    { id: 6, hearts: "CB", nh: 3, L: ["R2"], R: ["CB", "CB", "CB"] }
   ];
+  // Scarabées de départ selon la place dans l'ordre du tour (tiré au hasard)
+  const START_SC = [1, 2, 2, 2, 3];
   const GUARDIANS = [
     { id: 1, key: "R1", need: 7 }, { id: 2, key: "R2", need: 6 }, { id: 3, key: "R3", need: 5 },
     { id: 4, key: "CN", need: 6 }, { id: 5, key: "CB", need: 6 }, { id: 6, key: "D", need: 5 },
@@ -58,7 +65,7 @@
 
   function newGame(opts) {
     const n = opts.players.length, r = rng(opts.seed || Date.now());
-    const chars = shuffle([1, 2, 3, 4, 5], r).slice(0, n);
+    const chars = shuffle(CHARS.map(c => c.id), r).slice(0, n);
     const G = {
       n, r, round: 1, turn: 0, side: null, over: false, log: [],
       deck: shuffle(CARDS.map(c => c.id), r),
@@ -68,7 +75,8 @@
       pillars: Array.from({ length: 9 }, () => ({})),
       players: opts.players.map((p, i) => ({ i, name: p.name, bot: !!p.bot, char: chars[i], t: { L: [], R: [], U: [], D: [] }, sc: 1, tokens: [], guardians: [], color: p.color, st: { takes: [], cardCost: 0, dirCost: 0, guardCost: 0, gRiver: 0, gCard: 0, gAnubis: 0, gSc2: 0, horus: 0, first: 0, free: 0, claims: [] } }))
     };
-    G.order = G.players.map(p => p.i).sort((a, b) => G.players[a].char - G.players[b].char);
+    G.order = shuffle(G.players.map(p => p.i), r);
+    G.order.forEach((pi, k) => { G.players[pi].sc = START_SC[k]; G.players[pi].sc0 = START_SC[k]; });
     G.pillars[0][0] = G.order.slice().reverse();
     refill(G);
     return G;
@@ -217,8 +225,8 @@
 
   /* ---------- BOTS ---------- */
   // Réglages de l'IA (entraînables). Les valeurs par défaut sont les réglages d'origine.
-  // Réglages entraînés (280 générations, ~240 000 parties simulées, 25/11/2026)
-  const DEFAULT_W = {res:  1.064,  gate:  0.152,  guardNear:  0.303,  sc:  3.122,  anubis:  3.393,  horus:  3.833,  horusPair:  1.284,  ra:  7.907,  godGuard:  0.682,  heartFix:  1.715,  heartBad:  0.675,  synergy:  0.637,  balIcon:  4.494,  flatPV:  0.551,  perPV:  0.397,  future:  0.481,  sideGuard:  0.794,  cost:  2.339,  river:  1.365,  top:  1.17,  bottom:  0.11,  claimMax:  2};
+  // Réglages entraînés (6 Personnages, ~460 000 parties simulées, 25/11/2026)
+  const DEFAULT_W = {res:  1.066,  gate:  0.153,  guardNear:  0.229,  sc:  2.537,  anubis:  3.375,  horus:  3.299,  horusPair:  1.49,  ra:  5.067,  godGuard:  0.694,  heartFix:  2.378,  heartBad:  0.625,  synergy:  0.49,  balIcon:  5.398,  flatPV:  0.446,  perPV:  0.249,  future:  0.431,  sideGuard:  0.658,  cost:  2.395,  river:  1.079,  top:  0.05,  bottom:  -0.75,  claimMax:  2};
   let W = Object.assign({}, DEFAULT_W);
   const setWeights = w => { W = Object.assign({}, DEFAULT_W, w || {}); };
   const getWeights = () => Object.assign({}, W);
@@ -317,6 +325,6 @@
     while (!G.over && k++ < 200) await playTurn(G, botChoose(G, curPlayer(G)), botHooks);
     return G;
   }
-  const API = { DEFAULT_W, setWeights, getWeights, summary, simGame, HALF_TOKENS, SIDES, OPP, halfCounts, cardsPV, cardPV, visIcons, scoringCards, CARDS, CHARS, GUARDIANS, RA_TOKENS, GPV, DEVOUR, ROUNDS, newGame, counts, metric, card, charOf, claimable, sideCost, options, curPlayer, playTurn, score, botChoose, botRa, botClaim, botHooks, evalPlace };
+  const API = { START_SC, DEFAULT_W, setWeights, getWeights, summary, simGame, HALF_TOKENS, SIDES, OPP, halfCounts, cardsPV, cardPV, visIcons, scoringCards, CARDS, CHARS, GUARDIANS, RA_TOKENS, GPV, DEVOUR, ROUNDS, newGame, counts, metric, card, charOf, claimable, sideCost, options, curPlayer, playTurn, score, botChoose, botRa, botClaim, botHooks, evalPlace };
   if (typeof module !== "undefined") module.exports = API; else root.DUAT = API;
 })(this);
