@@ -17,7 +17,7 @@ const T = {
   fr: {
     tagline: "Guidez votre âme à travers les portes du Duat, gagnez la faveur des Gardiens… et présentez à Osiris un cœur en équilibre.",
     meta: "2 à 5 joueurs · 30 minutes · 8 manches", yourName: "Votre nom", players: "Joueurs", start: "Entrer dans le Duat",
-    rules: "Règles", cards: "Le matériel", stats: "Statistiques", train: "🧠 Entraîner l'IA", home: "Accueil", offer: "Cartes Vie disponibles", journal: "Journal de la partie",
+    rules: "Règles", cards: "Le matériel", stats: "Statistiques", tuto: "🎓 Tutoriel", train: "🧠 Entraîner l'IA", home: "Accueil", offer: "Cartes Vie disponibles", journal: "Journal de la partie",
     nhint: n => `Vous contre ${n - 1} adversaire${n > 2 ? "s" : ""} · plateau face ${n <= 3 ? "B" : "A"} · ${n <= 3 ? 4 : n === 4 ? 5 : 6} cartes Vie visibles`,
     round: (r) => r <= 7 ? `Manche ${r}/8` : "Manche 8/8 · Jugement", sideFree: "Direction libre", orient: { L: "Les Fautes", R: "Les Vertus", U: "Les Accomplissements", D: "La Spiritualité" }, impBy: n => `Direction imposée par ${n}`, youChoose: "Vous êtes le 1er joueur : choisissez la direction, elle sera imposée aux autres.", waitFirst: n => `${n} va choisir la direction de la manche…`, imposedTag: "imposée", sideImp: s => `Direction imposée : ${T.fr[s]}`,
     L: "◀ Gauche", R: "Droite ▶", U: "▲ Haut", D: "▼ Bas", subU: "sans scoring", subD: "scoring seul, sur tout le jeu", halfL: "Moitié gauche", halfR: "Moitié droite", adj: "direction adjacente", opp: "direction opposée", free: "gratuit", impose: "vous imposez ce côté", change: "changer de côté",
@@ -46,7 +46,7 @@ const T = {
   en: {
     tagline: "Guide your soul through the gates of the Duat, win the Guardians' favour… and bring Osiris a heart in perfect balance.",
     meta: "2–5 players · 30 minutes · 8 rounds", yourName: "Your name", players: "Players", start: "Enter the Duat",
-    rules: "Rules", cards: "Components", stats: "Statistics", train: "🧠 Train the AI", home: "Home", offer: "Available Life cards", journal: "Game log",
+    rules: "Rules", cards: "Components", stats: "Statistics", tuto: "🎓 Tutorial", train: "🧠 Train the AI", home: "Home", offer: "Available Life cards", journal: "Game log",
     nhint: n => `You vs ${n - 1} opponent${n > 2 ? "s" : ""} · board side ${n <= 3 ? "B" : "A"} (${n <= 3 ? 4 : n === 4 ? 5 : 6} cards on display)`,
     round: r => r <= 7 ? `Round ${r}/8` : "Round 8/8 · Judgment", sideFree: "Free direction", orient: { L: "Faults", R: "Virtues", U: "Achievements", D: "Spirituality" }, impBy: n => `Direction imposed by ${n}`, youChoose: "You are the first player: choose the direction, it will be imposed on the others.", waitFirst: n => `${n} will choose this round's direction…`, imposedTag: "imposed", sideImp: s => `Imposed direction: ${T.en[s]}`,
     L: "◀ Left", R: "Right ▶", U: "▲ Top", D: "▼ Bottom", subU: "no scoring", subD: "scoring only, on your whole display", halfL: "Left half", halfR: "Right half", adj: "adjacent direction", opp: "opposite direction", free: "free", impose: "you impose this side", change: "change side",
@@ -75,7 +75,7 @@ const T = {
   it: {
     tagline: "Guida la tua anima attraverso le porte del Duat, conquista il favore dei Guardiani… e presenta a Osiride un cuore in perfetto equilibrio.",
     meta: "Da 2 a 5 giocatori · 30 minuti · 8 round", yourName: "Il tuo nome", players: "Giocatori", start: "Entra nel Duat",
-    rules: "Regole", cards: "I materiali", stats: "Statistiche", train: "🧠 Allena l'IA", home: "Home", offer: "Carte Vita disponibili", journal: "Diario della partita",
+    rules: "Regole", cards: "I materiali", stats: "Statistiche", tuto: "🎓 Tutorial", train: "🧠 Allena l'IA", home: "Home", offer: "Carte Vita disponibili", journal: "Diario della partita",
     nhint: n => `Tu contro ${n - 1} avversari${n > 2 ? "" : "o"} · plancia lato ${n <= 3 ? "B" : "A"} · ${n <= 3 ? 4 : n === 4 ? 5 : 6} carte Vita visibili`,
     round: r => r <= 7 ? `Round ${r}/8` : "Round 8/8 · Giudizio", sideFree: "Direzione libera", orient: { L: "Le Colpe", R: "Le Virtù", U: "Le Realizzazioni", D: "La Spiritualità" }, impBy: n => `Direzione imposta da ${n}`, youChoose: "Sei il primo giocatore: scegli la direzione, sarà imposta agli altri.", waitFirst: n => `${n} sceglierà la direzione del round…`, imposedTag: "imposta", sideImp: s => `Direzione imposta: ${T.it[s]}`,
     L: "◀ Sinistra", R: "Destra ▶", U: "▲ Sopra", D: "▼ Sotto", subU: "senza punteggio", subD: "solo punteggio, su tutto il gioco", halfL: "Metà sinistra", halfR: "Metà destra", adj: "direzione adiacente", opp: "direzione opposta", free: "gratis", impose: "imponi questa direzione", change: "cambiare lato",
@@ -158,7 +158,7 @@ function compassHTML() {
 }
 /* ---------- état ---------- */
 let G = null, gameId = 0, ui = { sel: null, resolve: null, modalResolve: null };
-let nPlayers = store.get("n", 4);
+let nPlayers = store.get("n", 4); window.__nPlayers = nPlayers;
 
 /* ---------- accueil ---------- */
 function applyLang() {
@@ -171,22 +171,24 @@ function applyLang() {
 document.addEventListener("click", e => { const b = e.target.closest(".lang button"); if (b) { lang = b.dataset.l; store.set("lang", lang); applyLang(); } });
 $("#frieze").innerHTML = [1, 2, 3, 4, 5, 6, 7, 8].map(i => `<img src="assets/g${i}a.jpg" alt="">`).join("");
 $("#nseg").innerHTML = [2, 3, 4, 5].map(n => `<button type="button" data-n="${n}" aria-pressed="${n === nPlayers}">${n}</button>`).join("");
-$("#nseg").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; nPlayers = +b.dataset.n; store.set("n", nPlayers); $("#nseg").querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", x === b)); $("#nhint").textContent = t("nhint", nPlayers); });
+$("#nseg").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; nPlayers = +b.dataset.n; window.__nPlayers = nPlayers; store.set("n", nPlayers); $("#nseg").querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", x === b)); $("#nhint").textContent = t("nhint", nPlayers); });
 $("#pname").value = store.get("name", "");
-$("#startBtn").onclick = startGame;
+$("#startBtn").onclick = () => startGame();
 $("#homeBtn").onclick = () => { gameId++; closeModal(); $("#game").hidden = true; $("#home").hidden = false; window.scrollTo(0, 0); };
 $("#rulesBtn").onclick = $("#rulesBtn2").onclick = showRules;
 $("#catBtn").onclick = () => showCatalog("life");
 $("#statsBtn").onclick = () => window.DuatStats ? DuatStats.open() : showStats();
 $("#trainBtn").onclick = () => window.DuatStats && DuatStats.openTrain();
 
-function startGame() {
+function startGame(opts = {}) {
+  const nPlayers = opts.n || window.__nPlayers;
   const name = $("#pname").value.trim() || t("you");
   store.set("name", $("#pname").value.trim());
   const bots = BOTS.slice().sort(() => Math.random() - .5);
   const players = [{ name, bot: false, color: COLORS[0] }];
   for (let i = 1; i < nPlayers; i++) players.push({ name: bots[i - 1], bot: true, color: COLORS[i] });
-  G = D.newGame({ players, seed: (Math.random() * 1e9) | 0 });
+  G = D.newGame({ players, seed: opts.seed || (Math.random() * 1e9) | 0 });
+  G.tuto = !!opts.tuto; if (window.DuatTuto) DuatTuto.reset(G.tuto);
   ui = { sel: null, resolve: null };
   $("#home").hidden = true; $("#game").hidden = false; window.scrollTo(0, 0);
   render(); loop(++gameId);
@@ -199,6 +201,7 @@ async function loop(id) {
     render();
     if (p.bot) {
       await sleep(900);
+      while (window.DuatTuto && DuatTuto.blocking() && id === gameId) await sleep(200);
       if (id !== gameId) return;
       const ch = D.botChoose(G, p);
       await D.playTurn(G, ch, D.botHooks);
@@ -321,6 +324,7 @@ function render() {
     ${chipsHTML(p)}<div class="mini">${D.SIDES.map(s => p.t[s].length ? `<span class="mtag">${t(s)}</span>${p.t[s].map(id => cardHTML(id, { side: s })).join("")}` : "").join("")}</div></div>`).join("");
   // journal
   const L = T[lang].log;
+  if (window.DuatTuto) setTimeout(() => DuatTuto.onRender(), 0);
   $("#log").innerHTML = G.log.slice().reverse().slice(0, 120).map(e => { const p = e.p !== undefined ? `<b style="color:${G.players[e.p].color}">${esc(G.players[e.p].name)}</b>` : ""; return L[e.k] ? `<li>${L[e.k](p, e)}</li>` : ""; }).join("");
 }
 $("#offer").addEventListener("click", e => { const b = e.target.closest("[data-slot]"); if (!b || !ui.resolve) return; ui.sel = +b.dataset.slot; render(); $("#action button")?.focus(); });
@@ -398,6 +402,6 @@ function showStats() {
     <div class="choices"><button id="resetStats">${t("reset")}</button></div>`);
   $("#resetStats").onclick = () => { store.set("stats", { played: 0, wins: 0, best: 0, total: 0, dev: 0 }); showStats(); };
 }
-window.DuatUI = { ic, cardHTML, raImg, gname: k => T[lang].g[k], lang: () => lang, openSheet };
+window.DuatUI = { ic, cardHTML, raImg, gname: k => T[lang].g[k], lang: () => lang, openSheet, state: () => ({ G, ui }), startGame, t };
 applyLang();
 }

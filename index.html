@@ -7,24 +7,28 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Marcellus+SC&family=Alegreya+Sans:wght@400;500;700;800&family=Noto+Sans+Egyptian+Hieroglyphs&display=swap">
-<link rel="stylesheet" href="style.css?v=27">
+<link rel="stylesheet" href="style.css?v=30">
 </head>
 <body>
 <section id="home" class="home">
   <div class="home-top">
     <div class="lang" role="group" aria-label="Langue"></div>
   </div>
+  <div class="eg-band" aria-hidden="true"></div>
   <div class="frieze" id="frieze"></div>
   <div class="home-title">
+    <div class="eg-orn hg" aria-hidden="true">𓋹 𓂀 𓋹</div>
     <h1 class="logo">Duat</h1>
     <p class="tagline" data-t="tagline"></p>
     <p class="meta" data-t="meta"></p>
+    <div class="eg-rule" aria-hidden="true"></div>
   </div>
-  <div class="setup">
+  <div class="setup stela">
     <label class="row"><span data-t="yourName"></span><input id="pname" maxlength="16" autocomplete="off"></label>
     <div class="row"><span data-t="players"></span><div class="seg" id="nseg"></div></div>
     <p class="hint" id="nhint"></p>
     <button class="big" id="startBtn" data-t="start"></button>
+    <button class="tutoBtn" id="tutoBtn" data-t="tuto"></button>
     <div class="sec">
       <button id="rulesBtn" data-t="rules"></button>
       <button id="catBtn" data-t="cards"></button>
@@ -32,6 +36,7 @@
       <button id="trainBtn" data-t="train"></button>
     </div>
   </div>
+  <div class="eg-band bottom" aria-hidden="true"></div>
 </section>
 
 <main id="game" class="game" hidden>
@@ -66,8 +71,9 @@
 
 <div class="modal" id="modal" hidden><div class="sheet" id="sheet"></div></div>
 
-<script src="engine.js?v=27"></script>
-<script src="ui.js?v=27"></script>
-<script src="stats.js?v=27"></script>
+<script src="engine.js?v=30"></script>
+<script src="ui.js?v=30"></script>
+<script src="stats.js?v=30"></script>
+<script src="tuto.js?v=30"></script>
 </body>
 </html>
