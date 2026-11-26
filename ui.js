@@ -35,7 +35,7 @@ const T = {
     anubis: "Anubis — gagnez 1 Scarabée par icône Anubis.", horus: "Horus — chaque paire d'Horus : piochez une carte et jouez-la (côté imposé).", ra: "Râ — gagnez un jeton bonus (7 au total).",
     g: { R1: "Agriculture", R2: "Artisanat", R3: "Connaissance", CN: "Cœurs noirs", CB: "Cœurs blancs", D: "Dieux", SIDE: "Cartes d'un même côté", SC: "Symboles Scarabée", BAL: "Balance", SC2: "1 Scarabée + 2 PV" },
     gNeed: (n, k) => `${n} × ${k} → 7 PV`, gPillar: "Pendant sa manche, ce Gardien fixe ce que l'on compte sur le pilier (ordre du tour).",
-    char: n => `Personnage ${n}`, charSet: "Personnages", setClassic: "Classiques (5)", setNew: "Recommandés (6)", setNewNote: "Distribués au hasard, ordre du tour de la 1re manche tiré au hasard, scarabées de départ selon la place : 1, 2, 2, 2, 3.", charName: c => `${c.nh} cœur${c.nh > 1 ? "s" : ""} ${c.hearts === "CN" ? "noir" : "blanc"}${c.nh > 1 ? "s" : ""}`, cardN: n => `Carte Vie n°${n}`,
+    char: n => `Personnage ${n}`, charSet: "Personnages", aiLvl: "Niveau des IA", lvl1: "Facile", lvl2: "Avancé", lvl3: "Expert", lvlTip: "Facile : l\u2019IA applique ses règles apprises. Avancé et Expert : elle imagine en plus la fin de la partie pour chaque coup possible.", setClassic: "Classiques (5)", setNew: "Recommandés (6)", setNewNote: "Distribués au hasard, ordre du tour de la 1re manche tiré au hasard, scarabées de départ selon la place : 1, 2, 2, 2, 3.", charName: c => `${c.nh} cœur${c.nh > 1 ? "s" : ""} ${c.hearts === "CN" ? "noir" : "blanc"}${c.nh > 1 ? "s" : ""}`, cardN: n => `Carte Vie n°${n}`,
     log: {
       take: (p, e) => `${p} prend la carte n°${e.id}${e.cost ? ` (${e.cost} scarabée${e.cost > 1 ? "s" : ""})` : ""}${e.gain ? `, ramasse ${e.gain} scarabée${e.gain > 1 ? "s" : ""}` : ""}${e.sideCost ? ` et paie ${e.sideCost} pour changer de direction` : ""}.`,
       place: (p, e) => `${p} ${e.horus ? "(Horus) " : ""}pose la carte n°${e.id} ${({ L: "à gauche", R: "à droite", U: "en haut", D: "en bas" })[e.side]}.`,
@@ -64,7 +64,7 @@ const T = {
     anubis: "Anubis — gain 1 scarab per Anubis icon.", horus: "Horus — each pair of Horus: draw a card and play it (imposed side).", ra: "Ra — gain a bonus token (7 in the game).",
     g: { R1: "Agriculture", R2: "Craft", R3: "Knowledge", CN: "Black hearts", CB: "White hearts", D: "Gods", SIDE: "Cards on one side", SC: "Scarab symbols", BAL: "Balance", SC2: "1 scarab + 2 VP" },
     gNeed: (n, k) => `${n} × ${k} → 7 VP`, gPillar: "During its round, this Guardian sets what is counted on the pillar (turn order).",
-    char: n => `Character ${n}`, charSet: "Characters", setClassic: "Classic (5)", setNew: "Recommended (6)", setNewNote: "Dealt at random, first round turn order drawn at random, starting scarabs by seat: 1, 2, 2, 2, 3.", charName: c => `${c.nh} ${c.hearts === "CN" ? "black" : "white"} heart${c.nh > 1 ? "s" : ""}`, cardN: n => `Life card #${n}`,
+    char: n => `Character ${n}`, charSet: "Characters", aiLvl: "AI level", lvl1: "Easy", lvl2: "Advanced", lvl3: "Expert", lvlTip: "Easy: the AI applies its learned rules. Advanced and Expert: it also plays out the rest of the game in its head for each possible move.", setClassic: "Classic (5)", setNew: "Recommended (6)", setNewNote: "Dealt at random, first round turn order drawn at random, starting scarabs by seat: 1, 2, 2, 2, 3.", charName: c => `${c.nh} ${c.hearts === "CN" ? "black" : "white"} heart${c.nh > 1 ? "s" : ""}`, cardN: n => `Life card #${n}`,
     log: {
       take: (p, e) => `${p} takes card #${e.id}${e.cost ? ` (${e.cost} scarab${e.cost > 1 ? "s" : ""})` : ""}${e.gain ? `, collects ${e.gain} scarab${e.gain > 1 ? "s" : ""}` : ""}${e.sideCost ? ` and pays ${e.sideCost} to switch direction` : ""}.`,
       place: (p, e) => `${p} ${e.horus ? "(Horus) " : ""}places card #${e.id} on the ${({ L: "left", R: "right", U: "top", D: "bottom" })[e.side]}.`,
@@ -93,7 +93,7 @@ const T = {
     anubis: "Anubi — guadagna 1 Scarabeo per icona Anubi.", horus: "Horus — ogni coppia di Horus: pesca una carta e giocala (direzione imposta).", ra: "Ra — guadagna un gettone bonus (7 in tutto).",
     g: { R1: "Agricoltura", R2: "Artigianato", R3: "Conoscenza", CN: "Cuori neri", CB: "Cuori bianchi", D: "Dei", SIDE: "Carte su uno stesso lato", SC: "Simboli Scarabeo", BAL: "Bilancia", SC2: "1 Scarabeo + 2 PV" },
     gNeed: (n, k) => `${n} × ${k} → 7 PV`, gPillar: "Durante il suo round, questo Guardiano stabilisce cosa si conta sul pilastro (ordine di turno).",
-    char: n => `Personaggio ${n}`, charSet: "Personaggi", setClassic: "Classici (5)", setNew: "Consigliati (6)", setNewNote: "Distribuiti a caso, ordine di turno del 1° round casuale, scarabei iniziali secondo il posto: 1, 2, 2, 2, 3.", charName: c => `${c.nh} cuor${c.nh > 1 ? "i" : "e"} ${c.hearts === "CN" ? "ner" : "bianc"}${c.nh > 1 ? (c.hearts === "CN" ? "i" : "hi") : "o"}`, cardN: n => `Carta Vita n.${n}`,
+    char: n => `Personaggio ${n}`, charSet: "Personaggi", aiLvl: "Livello delle IA", lvl1: "Facile", lvl2: "Avanzato", lvl3: "Esperto", lvlTip: "Facile: l\u2019IA applica le regole apprese. Avanzato ed Esperto: immagina anche il resto della partita per ogni mossa possibile.", setClassic: "Classici (5)", setNew: "Consigliati (6)", setNewNote: "Distribuiti a caso, ordine di turno del 1° round casuale, scarabei iniziali secondo il posto: 1, 2, 2, 2, 3.", charName: c => `${c.nh} cuor${c.nh > 1 ? "i" : "e"} ${c.hearts === "CN" ? "ner" : "bianc"}${c.nh > 1 ? (c.hearts === "CN" ? "i" : "hi") : "o"}`, cardN: n => `Carta Vita n.${n}`,
     log: {
       take: (p, e) => `${p} prende la carta n.${e.id}${e.cost ? ` (${e.cost} scarabe${e.cost > 1 ? "i" : "o"})` : ""}${e.gain ? `, raccoglie ${e.gain} scarabe${e.gain > 1 ? "i" : "o"}` : ""}${e.sideCost ? ` e paga ${e.sideCost} per cambiare direzione` : ""}.`,
       place: (p, e) => `${p} ${e.horus ? "(Horus) " : ""}posa la carta n.${e.id} ${({ L: "a sinistra", R: "a destra", U: "sopra", D: "sotto" })[e.side]}.`,
@@ -161,6 +161,8 @@ let G = null, gameId = 0, ui = { sel: null, resolve: null, modalResolve: null };
 let nPlayers = store.get("n", 4); window.__nPlayers = nPlayers;
 let charSet = store.get("set", "classic"); window.__charSet = charSet;
 const charLabel = ch => ch.nh ? t("charName", ch) : t("char", ch.id);
+let aiLvl = +store.get("lvl", 3) || 3; window.__aiLvl = aiLvl;
+function renderLvlSeg() { const el = $("#lvlseg"); el.title = t("lvlTip"); el.innerHTML = [1, 2, 3].map(v => `<button type="button" data-lvl="${v}" aria-pressed="${v === aiLvl}">${t("lvl" + v)}</button>`).join(""); }
 function renderSetSeg() { $("#setseg").innerHTML = [["classic", "setClassic"], ["new", "setNew"]].map(([v, k]) => `<button type="button" data-set="${v}" aria-pressed="${v === charSet}">${t(k)}</button>`).join(""); }
 
 /* ---------- accueil ---------- */
@@ -169,7 +171,7 @@ function applyLang() {
   document.querySelectorAll("[data-t]").forEach(el => el.textContent = t(el.dataset.t));
   document.querySelectorAll(".lang").forEach(box => box.innerHTML = ["fr", "en", "it"].map(l => `<button type="button" data-l="${l}" aria-pressed="${l === lang}" title="${({ fr: "Français", en: "English", it: "Italiano" })[l]}">${FLAGS[l]}<span>${l.toUpperCase()}</span></button>`).join(""));
   $("#nhint").textContent = t("nhint", nPlayers);
-  renderSetSeg();
+  renderSetSeg(); renderLvlSeg();
   if (G && !$("#game").hidden) render();
 }
 document.addEventListener("click", e => { const b = e.target.closest(".lang button"); if (b) { lang = b.dataset.l; store.set("lang", lang); applyLang(); } });
@@ -178,6 +180,7 @@ $("#friezeR").innerHTML = [5, 6, 7, 8].map(i => `<img src="assets/g${i}a.jpg" al
 $("#nseg").innerHTML = [2, 3, 4, 5].map(n => `<button type="button" data-n="${n}" aria-pressed="${n === nPlayers}">${n}</button>`).join("");
 $("#nseg").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; nPlayers = +b.dataset.n; window.__nPlayers = nPlayers; store.set("n", nPlayers); $("#nseg").querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", x === b)); $("#nhint").textContent = t("nhint", nPlayers); });
 $("#pname").value = store.get("name", "");
+$("#lvlseg").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; aiLvl = +b.dataset.lvl; window.__aiLvl = aiLvl; store.set("lvl", aiLvl); renderLvlSeg(); });
 $("#setseg").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; charSet = b.dataset.set; window.__charSet = charSet; store.set("set", charSet); renderSetSeg(); });
 $("#startBtn").onclick = () => startGame();
 $("#homeBtn").onclick = () => { gameId++; closeModal(); $("#game").hidden = true; $("#home").hidden = false; window.scrollTo(0, 0); };
@@ -194,6 +197,7 @@ function startGame(opts = {}) {
   const players = [{ name, bot: false, color: COLORS[0] }];
   for (let i = 1; i < nPlayers; i++) players.push({ name: bots[i - 1], bot: true, color: COLORS[i] });
   G = D.newGame({ players, set: window.__charSet, seed: opts.seed || (Math.random() * 1e9) | 0 });
+  G.lvl = opts.tuto ? 1 : aiLvl;
   G.tuto = !!opts.tuto; if (window.DuatTuto) DuatTuto.reset(G.tuto);
   ui = { sel: null, resolve: null };
   $("#home").hidden = true; $("#game").hidden = false; window.scrollTo(0, 0);
@@ -206,11 +210,14 @@ async function loop(id) {
     const p = D.curPlayer(G);
     render();
     if (p.bot) {
-      await sleep(900);
+      await sleep(350);
       while (window.DuatTuto && DuatTuto.blocking() && id === gameId) await sleep(200);
       if (id !== gameId) return;
-      const ch = D.botChoose(G, p);
-      await D.playTurn(G, ch, D.botHooks);
+      const t0 = Date.now(), g0 = G;
+      const ch = await D.chooseMove(G, p, G.lvl);   // l'IA réfléchit (niveaux 2-3 : parties imaginées)
+      await sleep(Math.max(0, 550 - (Date.now() - t0)));
+      if (id !== gameId || G !== g0) return;
+      await D.playTurn(G, ch, D.hooksFor(G.lvl));
     } else {
       const ch = await new Promise(res => { ui.resolve = res; ui.sel = null; render(); });
       if (id !== gameId) return;

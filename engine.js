@@ -188,10 +188,10 @@
     G.offer.splice(choice.slot, 1); G.offer.push(null);
     await placeCard(G, p, o.card, choice.side, hooks);
     const cl = claimable(G, p);
-    if (cl.length) {
-      const pick = await hooks.claim(G, p, cl);
-      if (pick) { p.sc -= pick.cost; p.st.guardCost += pick.cost; p.st.claims.push({ gid: pick.gid, round: G.round, cost: pick.cost }); G.claimed[pick.gid] = p.i; p.guardians.push(pick.gid); G.log.push({ k: "claim", p: p.i, gid: pick.gid, cost: pick.cost }); }
-    }
+    finishTurn(G, p, cl.length ? await hooks.claim(G, p, cl) : null);
+  }
+  function finishTurn(G, p, pick) {
+    if (pick) { p.sc -= pick.cost; p.st.guardCost += pick.cost; p.st.claims.push({ gid: pick.gid, round: G.round, cost: pick.cost }); G.claimed[pick.gid] = p.i; p.guardians.push(pick.gid); G.log.push({ k: "claim", p: p.i, gid: pick.gid, cost: pick.cost }); }
     // pilier
     const c = counts(p);
     const lvl = G.round <= 7 ? Math.min(7, c[GUARDIANS[G.gates[G.round - 1] - 1].key]) : Math.min(3, c.diff);
@@ -313,13 +313,72 @@
   const HALF_TOKENS = ["R1", "R2", "R3", "CN", "CB", "BAL"];
   const botHooks = { ra: (G, p) => { const k = botRa(G, p); return { k, h: HALF_TOKENS.includes(k) ? bestHalf(p, k) : "L" }; }, claim: (G, p, l) => botClaim(G, p, l) };
 
+  /* ---------- IA experte : anticipation par parties imaginées ---------- */
+  // Pour chaque coup candidat, l'IA imagine la fin de la partie plusieurs fois (pioche inconnue rebattue à chaque fois,
+  // tous les joueurs jouant avec l'IA de base) et garde le coup qui donne le meilleur résultat moyen.
+  function cloneG(G, seed) {
+    const C = JSON.parse(JSON.stringify(G, (k, v) => k === "log" || k === "hist" ? undefined : v));
+    C.r = rng(seed); C.log = []; shuffle(C.deck, C.r); return C;
+  }
+  const outcome = (C, me) => {
+    const R = C.result, mine = R.rows[me]; if (mine.devoured) return -60;
+    let best = -1e9; R.rows.forEach(r => { if (r.p !== me && !r.devoured) best = Math.max(best, r.total); });
+    if (best === -1e9) best = mine.total - 30;
+    const win = R.winners.includes(me) ? 1 / R.winners.length : 0;
+    return Math.max(-40, Math.min(40, mine.total - best)) + 25 * win;
+  };
+  async function rollout(G, me, first, seed, hooks1) {
+    const C = cloneG(G, seed);
+    await playTurn(C, first, hooks1 || botHooks);
+    let k = 0; while (!C.over && k++ < 200) await playTurn(C, botChoose(C, curPlayer(C)), botHooks);
+    return outcome(C, me);
+  }
+  const LEVELS = { 1: null, 2: { K: 5, B: 40, min: 1, max: 12, beta: 8 }, 3: { K: 8, B: 250, min: 8, max: 40, beta: 8 } };
+  async function mcChoose(G, p, cfg) {
+    const w = wOf(G, p);
+    let cands = options(G, p).map(o => ({ slot: o.slot, side: o.side, h: evalPlace(G, p, G.offer[o.slot].card, o.side, w) - o.cost * w.cost + G.offer[o.slot].sc * w.river }));
+    cands.sort((a, b) => b.h - a.h); cands = cands.slice(0, cfg.K);
+    if (cands.length < 2) return cands[0];
+    cands.forEach(c => c.s = 0);
+    // budget : plus la fin approche, plus les parties imaginées sont courtes, donc plus on en joue
+    const R = budgetR(G, cfg);
+    if (R < 1) return cands[0];
+    for (let r = 0; r < R; r++) {
+      const seed = (Math.floor(G.r() * 4294967296) ^ (r * 2654435761)) >>> 0 || 1;
+      for (const c of cands) c.s += await rollout(G, p.i, c, seed);
+    }
+    let best = cands[0]; cands.forEach(c => { c.v = c.s / R + c.h * (cfg.beta === undefined ? 3 : cfg.beta) / R; if (c.v > best.v) best = c; });
+    return best;
+  }
+  const budgetR = (G, cfg) => { const rem = (ROUNDS - G.round) * G.n + (G.n - G.turn); return cfg.B ? Math.max(cfg.min || 0, Math.min(cfg.max || 30, Math.round(cfg.B / rem))) : cfg.R; };
+  // Revendiquer un Gardien (et lequel) : même méthode, à partir de la position juste après la pose
+  async function mcClaim(G, p, list, cfg) {
+    const def = botClaim(G, p, list), R = budgetR(G, cfg);
+    if (R < 2 || cfg.claim === false) return def;
+    const cands = [null, ...list].map(o => ({ o, s: 0 }));
+    for (let r = 0; r < R; r++) {
+      const seed = (Math.floor(Math.random() * 4294967296) ^ (r * 2654435761)) >>> 0 || 1;
+      for (const c of cands) {
+        const C = cloneG(G, seed); finishTurn(C, C.players[p.i], c.o);
+        let k = 0; while (!C.over && k++ < 200) await playTurn(C, botChoose(C, curPlayer(C)), botHooks);
+        c.s += outcome(C, p.i);
+      }
+    }
+    let best = null; cands.forEach(c => { c.v = c.s / R + (c.o === def || (c.o && def && c.o.gid === def.gid) ? 6 / R : 0); if (!best || c.v > best.v) best = c; });
+    return best.o;
+  }
+  // hooks selon le niveau du joueur
+  const hooksFor = level => ({ ra: botHooks.ra, claim: (G, p, l) => { const cfg = LEVELS[p.lvl || level || 1]; return cfg ? mcClaim(G, p, l, cfg) : botClaim(G, p, l); } });
+  // level : 1 = rapide (règles apprises), 2 = avancée, 3 = experte
+  const chooseMove = (G, p, level) => { const cfg = LEVELS[p.lvl || level || 1]; return cfg ? mcChoose(G, p, cfg) : botChoose(G, p); };
+
   // Résumé compact d'une partie terminée, pour les statistiques
   function summary(G, sim) {
     const R = G.result || score(G);
     const rankOf = {}; R.ranked.forEach((r, k) => rankOf[r.p] = k + 1);
     const seat0 = {}; G.pillars[0][0].slice().reverse().forEach((pi, k) => seat0[pi] = k);
     return {
-      t: Date.now(), sim: !!sim, n: G.n, set: G.set, gates: G.gates.slice(), hist: G.hist || [], deckLeft: G.deck.length,
+      t: Date.now(), sim: !!sim, n: G.n, set: G.set, lvl: G.lvl || 1, gates: G.gates.slice(), hist: G.hist || [], deckLeft: G.deck.length,
       players: G.players.map(p => {
         const r = R.rows[p.i], c = counts(p), balanced = c.diff === 0;
         return {
@@ -334,13 +393,15 @@
       })
     };
   }
-  async function simGame(n, seed, ws, set) {
+  async function simGame(n, seed, ws, set, lv) {
     const G = newGame({ seed, set, players: Array.from({ length: n }, (_, i) => ({ name: "IA " + (i + 1), bot: true })) });
     if (ws) G.players.forEach((p, i) => { if (ws[i]) p.w = ws[i]; });
+    if (lv) { G.players.forEach((p, i) => { p.lvl = Array.isArray(lv) ? lv[i] : lv; }); G.lvl = Array.isArray(lv) ? Math.max(...lv) : lv; }
     let k = 0;
-    while (!G.over && k++ < 200) await playTurn(G, botChoose(G, curPlayer(G)), botHooks);
+    const H = hooksFor(1);
+    while (!G.over && k++ < 200) await playTurn(G, await chooseMove(G, curPlayer(G)), H);
     return G;
   }
-  const API = { DEFAULT_W, DEFAULT_W_NEW, defaultWeights, CHARS_NEW, START_SC, ALL_CHARS, setWeights, getWeights, summary, simGame, HALF_TOKENS, SIDES, OPP, halfCounts, cardsPV, cardPV, visIcons, scoringCards, CARDS, CHARS, GUARDIANS, RA_TOKENS, GPV, DEVOUR, ROUNDS, newGame, counts, metric, card, charOf, claimable, sideCost, options, curPlayer, playTurn, score, botChoose, botRa, botClaim, botHooks, evalPlace };
+  const API = { LEVELS, chooseMove, hooksFor, mcClaim, finishTurn, mcChoose, cloneG, DEFAULT_W, DEFAULT_W_NEW, defaultWeights, CHARS_NEW, START_SC, ALL_CHARS, setWeights, getWeights, summary, simGame, HALF_TOKENS, SIDES, OPP, halfCounts, cardsPV, cardPV, visIcons, scoringCards, CARDS, CHARS, GUARDIANS, RA_TOKENS, GPV, DEVOUR, ROUNDS, newGame, counts, metric, card, charOf, claimable, sideCost, options, curPlayer, playTurn, score, botChoose, botRa, botClaim, botHooks, evalPlace };
   if (typeof module !== "undefined") module.exports = API; else root.DUAT = API;
 })(this);
