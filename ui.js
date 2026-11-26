@@ -419,7 +419,7 @@ function showStats() {
 (function zoomInit() {
   if (!window.matchMedia || !matchMedia("(hover: hover) and (pointer: fine)").matches) return;
   const pop = document.createElement("div"); pop.id = "zoomPop"; document.body.appendChild(pop);
-  const SEL = ".lc, .charT .face, .gpair img, .rtok img, .trophies img, .gch img, .frieze img, .gslot";
+  const SEL = ".lc, .charT .face, .gpair img, .rtok img, .trophies img, .gch img, .frieze img, .gslot, img.cimg";
   let cur = null;
   const place = e => { const r = pop.getBoundingClientRect(), m = 14; let x = e.clientX + 22, y = e.clientY - r.height / 2;
     if (x + r.width > innerWidth - m) x = e.clientX - r.width - 22; y = Math.max(m, Math.min(y, innerHeight - r.height - m));
