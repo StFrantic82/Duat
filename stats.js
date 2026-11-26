@@ -8,7 +8,7 @@ const IT = {
 "Dépensés : cartes":"Spesi: carte","Dépensés : changement de direction":"Spesi: cambio di direzione","Dépensés : Gardiens":"Spesi: Guardiani","Restants en fin de partie":"Rimasti a fine partita",
 "Prises gratuites forcées (rien de payable)":"Prese gratuite forzate (nulla di pagabile)","Scarabées gagnés grâce à Anubis":"Scarabei ottenuti grazie ad Anubi","Cartes piochées grâce à Horus":"Carte pescate grazie a Horus",
 "Jetons Râ obtenus":"Gettoni Ra ottenuti","Manches jouées en premier":"Round giocati per primo","◀ Gauche":"◀ Sinistra","Droite ▶":"Destra ▶","▲ Haut":"▲ Sopra","▼ Bas":"▼ Sotto",
-"Tous":"Tutti","Niveau des IA":"Livello delle IA","Facile":"Facile","Avancé":"Avanzato","Expert":"Esperto","très rapide":"molto veloce","moins d'1 s par partie":"meno di 1 s a partita","plusieurs secondes par partie":"diversi secondi a partita","Cliquer pour trier":"Clicca per ordinare","Gagnants":"Vincitori","Perdants":"Perdenti","parties":"partite","PV moyens par joueur":"PV medi per giocatore","PV moyens du gagnant":"PV medi del vincitore",
+"Tous":"Tutti","IA Expert":"IA Esperta","quelques secondes par partie":"qualche secondo a partita","Niveau des IA":"Livello delle IA","Facile":"Facile","Avancé":"Avanzato","Expert":"Esperto","très rapide":"molto veloce","moins d'1 s par partie":"meno di 1 s a partita","plusieurs secondes par partie":"diversi secondi a partita","Cliquer pour trier":"Clicca per ordinare","Gagnants":"Vincitori","Perdants":"Perdenti","parties":"partite","PV moyens par joueur":"PV medi per giocatore","PV moyens du gagnant":"PV medi del vincitore",
 "PV d'écart entre le 1er et le 2e":"PV di scarto tra 1° e 2°","des joueurs dévorés par Ammout":"dei giocatori divorati da Ammit","des joueurs parfaitement équilibrés":"dei giocatori in perfetto equilibrio",
 "prises gratuites forcées par joueur":"prese gratuite forzate per giocatore","cartes restant dans la pioche":"carte rimaste nel mazzo",
 "Référence : taux de victoire attendu si tout est équilibré":"Riferimento: percentuale di vittoria attesa se tutto è bilanciato","En vert au-dessus, en rouge en dessous.":"In verde sopra, in rosso sotto.",
@@ -49,7 +49,7 @@ const S = { batch: false, add(rec) { load().push(rec); if (mem.length > MAX) mem
 window.DuatStats = S;
 
 /* ---------- simulations ---------- */
-let running = false, stopReq = false, simL = 2;
+let running = false, stopReq = false; const simL = 3; // les simulations utilisent toujours l'IA Expert
 async function simulate(n, np, onProgress) {
   running = true; stopReq = false; S.batch = true;
   for (let k = 0; k < n && !stopReq; k++) {
@@ -190,7 +190,7 @@ function compute(f) {
 }
 
 /* ---------- affichage ---------- */
-let filt = { src: "all", n: "all", set: "all", lvl: "all", sort: "wr", minG: 10 }, simN = 200, simP = "mix", confirmClear = false, msg = "";
+let filt = { src: "all", n: "all", set: "all", lvl: "3", sort: "wr", minG: 10 }, simN = 50, simP = "mix", confirmClear = false, msg = "";
 const seg = (key, opts) => `<div class="sseg">${opts.map(([v, l]) => `<button type="button" data-f="${key}" data-v="${v}" aria-pressed="${String(filt[key]) === String(v)}">${l}</button>`).join("")}</div>`;
 const DIRL = () => ({ L: L("◀ Gauche", "◀ Left"), R: L("Droite ▶", "Right ▶"), U: L("▲ Haut", "▲ Top"), D: L("▼ Bas", "▼ Bottom") });
 const th3 = () => `<th>${L("Tous", "All")}</th><th>${L("Gagnants", "Winners")}</th><th>${L("Perdants", "Losers")}</th>`;
@@ -309,8 +309,7 @@ function render() {
   const hdr = `<div class="simbox"><b>${L("Simuler des parties entre IA", "Simulate AI games")}</b>
      <label><input type="number" id="simN" min="1" max="5000" value="${simN}"> ${L("parties à", "games with")}</label>
      <div class="sseg">${[["2", "2"], ["3", "3"], ["4", "4"], ["5", "5"], ["mix", L("2 à 5", "2 to 5")]].map(([v, l]) => `<button type="button" data-sp="${v}" aria-pressed="${simP === v}">${l}</button>`).join("")}</div> ${L("joueurs", "players")}
-     <span class="simset">${L("Niveau des IA", "AI level")} : <span class="sseg">${[[1, L("Facile", "Easy")], [2, L("Avancé", "Advanced")], [3, L("Expert", "Expert")]].map(([v, l]) => `<button type="button" data-sl="${v}" aria-pressed="${simL === v}" ${running ? "disabled" : ""}>${l}</button>`).join("")}</span></span>
-     <span class="simset simhint">${simL === 1 ? L("très rapide", "very fast") : simL === 2 ? L("moins d'1 s par partie", "under 1 s per game") : L("plusieurs secondes par partie", "several seconds per game")}</span>
+     <span class="simset">${L("IA Expert", "Expert AI")} <span class="simhint">· ${L("quelques secondes par partie", "a few seconds per game")}</span></span>
      <span class="simset">${L("Personnages", "Characters")} : <b>${curSet() === "new" ? L("recommandés", "recommended") : L("classiques", "classic")}</b></span>
      <button type="button" class="primary" id="simGo" ${running || training ? "disabled" : ""}>${L("Lancer", "Run")}</button><button type="button" id="simStop" ${running ? "" : "disabled"}>${L("Arrêter", "Stop")}</button>
      <span class="simprog" id="simProg">${msg}</span>
@@ -329,7 +328,6 @@ function onClick(e) {
   const b = e.target.closest("button"); if (!b || !$("#statsBody") || !$("#statsBody").contains(b)) return;
   if (b.dataset.f) { const k = b.dataset.f; filt[k] = k === "minG" ? +b.dataset.v : b.dataset.v; confirmClear = false; render(); return; }
   if (b.dataset.sp) { simP = b.dataset.sp; render(); return; }
-  if (b.dataset.sl) { simL = +b.dataset.sl; render(); return; }
   if (b.id === "simGo") {
     simN = Math.max(1, Math.min(5000, +$("#simN").value || 100)); msg = L("Démarrage…", "Starting…"); render();
     simulate(simN, simP, (k, n, done) => { msg = done ? L("Terminé", "Done") + ` · ${n}` : `${k} / ${n}`; if (done) render(); else { const el = $("#simProg"); if (el) el.innerHTML = `${bar(k, n)} ${msg}`; } });
